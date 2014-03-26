@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Google Inc.
+ * Copyright (C) 2013 Deanna Hood
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,5 @@
  * the License.
  */
 
-include 'android_gingerbread_mr1', 'android_benchmarks', 'android_tutorial_camera',
-        'android_tutorial_image_transport', 'android_tutorial_pubsub' 
-include 'android_honeycomb_mr2', 'android_acm_serial', 'android_tutorial_map_viewer',
-        'android_tutorial_teleop'
-include 'docs'
-/*
-  The following code is not included in the multi-project yet till its sorted
-  whereabouts they should actually live (should they be in a java repo instead?)
-
-    polling_input_stream, compressed_map_transport
-*/
+include 'trajectory_listener'
+include 'android_gingerbread_mr1'

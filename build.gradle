@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Google Inc.
+ * Copyright (C) 2014 Deanna Hood
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.9'
+    gradleVersion = '1.10'
 }
 
 buildscript {
@@ -34,18 +34,41 @@ buildscript {
     }
     dependencies {
         classpath group: 'org.ros.rosjava_bootstrap', name: 'gradle_plugins', version: '[0.1,0.2)'
+        classpath group: 'org.ros.rosjava_messages', name: 'trajectory_msgs', version: '[1.10,1.11)'
     }
 }
 
 apply plugin: 'catkin'
 
+
 allprojects {
-    group 'org.ros.android_core'
+    /*
+      A github url provides a good standard unique name for your project
+      Example below, but you may wish to switch to your own unique url.
+    */
+    group 'com.github.rosjava.trajectory_viewer'
     version = project.catkin.pkg.version
 }
 
 subprojects {
-    if (name != 'docs') {
-        apply plugin: 'ros-android'
-    }
+    /*
+      See https://github.com/rosjava/rosjava_bootstrap (look for gradle_plugins)
+      to see what is going on under the hood.
+    */
+    //apply plugin: 'ros-java'
+    apply plugin: 'ros-android'
 }
+
+/*
+  Some useful tasks:
+
+    install: deploys jar's to MavenLocal() (i.e. ~/.m2/repository)
+    publishMavenJavaPublicationToMavenRepository : deploys jar's to devel/share/maven
+    installApp : assembles java apps in the _subproject_/build directories.
+
+  Note that these are dependent on the type of project (e.g. installApp is only valid for
+  java binary subprojects, while publishMavenJav... is only added once a subproject is included.
+  If you're using catkin_make, this is not important, since it will use the task list specified
+  in CMakeLists.txt
+*/
+defaultTasks 'tasks'
