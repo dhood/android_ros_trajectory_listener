@@ -18,7 +18,10 @@ package org.ros.android.view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.ImageView;
 import org.ros.android.MessageCallable;
 import org.ros.message.MessageListener;
@@ -29,18 +32,20 @@ import org.ros.node.NodeMain;
 import org.ros.node.topic.Subscriber;
 
 /**
- * Displays incoming sensor_msgs/CompressedImage messages.
+ * Displays incoming messages with a bitmap or other Drawable.
  * 
  * @author ethan.rublee@gmail.com (Ethan Rublee)
- * @author damonkohler@google.com (Damon Kohler)
+ * @author damonkohler@google.com (Damon Kohler). Modified by Deanna Hood.
  */
 public class RosImageView<T> extends ImageView implements NodeMain {
-
+    private static final java.lang.String TAG = "RosImageView";
   private String topicName;
   private String messageType;
-  private MessageCallable<Bitmap, T> callable;
+  private MessageCallable<Bitmap, T> bitmapCallable;
+  private MessageCallable<Drawable, T> drawableCallable;
+    private AnimationDrawable drawable;
 
-  public RosImageView(Context context) {
+    public RosImageView(Context context) {
     super(context);
   }
 
@@ -61,10 +66,14 @@ public class RosImageView<T> extends ImageView implements NodeMain {
   }
 
   public void setMessageToBitmapCallable(MessageCallable<Bitmap, T> callable) {
-    this.callable = callable;
+    this.bitmapCallable = callable;
   }
+  public void setMessageToDrawableCallable(MessageCallable<Drawable, T> callable) {
+        this.drawableCallable = callable;
+    }
 
-  @Override
+
+    @Override
   public GraphName getDefaultNodeName() {
     return GraphName.of("ros_image_view");
   }
@@ -75,15 +84,30 @@ public class RosImageView<T> extends ImageView implements NodeMain {
     subscriber.addMessageListener(new MessageListener<T>() {
       @Override
       public void onNewMessage(final T message) {
-        post(new Runnable() {
-          @Override
-          public void run() {
-            setImageBitmap(callable.call(message));
-          }
-        });
+        if (bitmapCallable != null) {
+            post(new Runnable() {
+              @Override
+              public void run() {
+                setImageBitmap(bitmapCallable.call(message));
+              }
+            });
+        } else if (drawableCallable != null) {
+            post(new Runnable() {
+                @Override
+                public void run() {
+                    Log.e(TAG, "setting drawable");
+
+                    drawable = (AnimationDrawable)drawableCallable.call(message);
+                    setImageDrawable(drawable);
+
+                    drawable.start();
+                }
+            });
+        }
         postInvalidate();
       }
     });
+
   }
 
   @Override

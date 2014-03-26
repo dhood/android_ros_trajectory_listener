@@ -2,10 +2,10 @@
 <merger>
 
     <dataSet config="main" >
-        <source path="/home/deanna/src/android/src/android_core/android_gingerbread_mr1/src/main/assets" />
+        <source path="/home/deanna/src/android_dev/src/trajectory_viewer/android_gingerbread_mr1/src/main/assets" />
     </dataSet>
     <dataSet config="release" >
-        <source path="/home/deanna/src/android/src/android_core/android_gingerbread_mr1/src/release/assets" />
+        <source path="/home/deanna/src/android_dev/src/trajectory_viewer/android_gingerbread_mr1/src/release/assets" />
     </dataSet>
 
 </merger>

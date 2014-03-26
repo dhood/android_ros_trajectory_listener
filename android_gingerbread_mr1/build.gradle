@@ -22,6 +22,6 @@ dependencies {
 apply plugin: 'android-library'
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 10
 }
 

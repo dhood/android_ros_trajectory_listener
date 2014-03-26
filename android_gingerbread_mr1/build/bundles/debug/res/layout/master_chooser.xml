@@ -95,4 +95,4 @@
             android:layout_gravity="bottom"
             style="@style/padded"/>
 
-</LinearLayout><!-- From: file:/home/deanna/src/android/src/android_core/android_gingerbread_mr1/src/main/res/layout/master_chooser.xml -->
+</LinearLayout><!-- From: file:/home/deanna/src/android_dev/src/trajectory_viewer/android_gingerbread_mr1/src/main/res/layout/master_chooser.xml -->
