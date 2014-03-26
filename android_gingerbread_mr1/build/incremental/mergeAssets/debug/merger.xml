@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger>
+
+    <dataSet config="main" >
+        <source path="/home/deanna/src/android/src/android_core/android_gingerbread_mr1/src/main/assets" />
+    </dataSet>
+    <dataSet config="debug" >
+        <source path="/home/deanna/src/android/src/android_core/android_gingerbread_mr1/src/debug/assets" />
+    </dataSet>
+
+</merger>
