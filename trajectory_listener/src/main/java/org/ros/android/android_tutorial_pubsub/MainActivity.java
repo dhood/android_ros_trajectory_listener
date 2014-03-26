@@ -31,9 +31,11 @@
     import org.ros.android.MessageCallable;
     import org.ros.android.RosActivity;
     import org.ros.android.view.RosImageView;
+    import org.ros.message.Duration;
     import org.ros.node.NodeConfiguration;
     import org.ros.node.NodeMainExecutor;
 
+    import java.util.Iterator;
     import java.util.List;
 
     import geometry_msgs.Vector3;
@@ -44,10 +46,9 @@
      */
     public class MainActivity extends RosActivity {
       private static final java.lang.String TAG = "trajectoryListener";
+        private int timeoutDuration_mSecs = 1000; //time in ms to leave the trajectory displayed before removing it (negative displays indefinitely)
 
-      //private RosTextView<MultiDOFJointTrajectory> rosTextView;
       private RosImageView<MultiDOFJointTrajectory> rosImageView;
-      //private Talker talker;
 
       public MainActivity() {
         // The RosActivity constructor configures the notification title and ticker
@@ -81,53 +82,35 @@
 
               AnimationDrawable animationDrawable = new AnimationDrawable();
 
-              Path prevPath = new Path(); //example code says 'final' http://stackoverflow.com/questions/9993030/bezier-curve-and-canvas
-              prevPath.moveTo((float)points.get(0).getTransforms().get(0).getTranslation().getX()*5000,(float)points.get(0).getTransforms().get(0).getTranslation().getY()*5000);
-              long dt_nsecs = points.get(0).getTimeFromStart().totalNsecs();
+              Path trajPath = new Path(); //example code says 'final' http://stackoverflow.com/questions/9993030/bezier-curve-and-canvas
+              trajPath.moveTo((float)points.get(0).getTransforms().get(0).getTranslation().getX()*5000,(float)points.get(0).getTransforms().get(0).getTranslation().getY()*5000);
 
-              int dt_msecs = (int) Long.rotateRight(dt_nsecs/1000,Integer.SIZE); //lose the nanosecond precision
-
-              for(MultiDOFJointTrajectoryPoint p : points)
+              for(int i = 0; i < points.size()-1; i++) //special case for first and last point/frame of trajectory
               {
-                  Path currPath = new Path(prevPath);
-                Vector3 tx = p.getTransforms().get(0).getTranslation();
-                currPath.lineTo((float)tx.getX()*5000,(float)tx.getY()*5000);
-                  PathShape pathShape = new PathShape(currPath,rosImageView.getWidth(),rosImageView.getHeight());
+                  //add new trajectory point onto path and create ShapeDrawable to pass as a frame for animation
+                  MultiDOFJointTrajectoryPoint p = points.get(i);
+                  Vector3 tx = p.getTransforms().get(0).getTranslation();
+                  ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) tx.getX() * 5000, (float) tx.getY() * 5000, trajPath);
 
-                  ShapeDrawable shapeDrawable = new ShapeDrawable();
-                  shapeDrawable.getPaint().setColor(Color.RED);
-                  shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
-                  shapeDrawable.getPaint().setStrokeWidth(10);
-                  shapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
-                  shapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
-                  shapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
-                  shapeDrawable.setShape(pathShape);
-                  animationDrawable.addFrame(shapeDrawable,dt_msecs);
+                  //determine the duration of the frame for the animation
+                  Duration frameDuration = points.get(i + 1).getTimeFromStart().subtract(p.getTimeFromStart()); // take difference between times to get appropriate duration for frame to be displayed
 
-
-
-                prevPath = currPath;
+                  long dt_msecs = frameDuration.totalNsecs()/1000000;
+                  animationDrawable.addFrame(shapeDrawable,(int)dt_msecs); //unless the duration is over 2mil seconds the cast is ok
 
               }
-/*
-                // use ovals as trial animation
-              ShapeDrawable mDrawable = new ShapeDrawable(new OvalShape());
-              mDrawable.getPaint().setColor(0xff74AC23);
-              mDrawable.setBounds(0, 0, 500, 500);
-              mDrawable.setIntrinsicHeight(rosImageView.getHeight());
-              mDrawable.setIntrinsicWidth(rosImageView.getWidth());
+              //cover end case
+              MultiDOFJointTrajectoryPoint p = points.get(points.size()-1);
+              Vector3 tx = p.getTransforms().get(0).getTranslation();
+              ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) tx.getX() * 5000, (float) tx.getY() * 5000, trajPath);
 
-              //animationDrawable.addFrame(shapeDrawable.getConstantState().newDrawable(),100);
-              animationDrawable.addFrame(mDrawable,1000);
-
-              ShapeDrawable nDrawable = new ShapeDrawable(new OvalShape());
-              nDrawable.getPaint().setColor(Color.RED);
-              nDrawable.setBounds(0, 0, 500, 500);
-              nDrawable.setIntrinsicHeight(rosImageView.getHeight());
-              nDrawable.setIntrinsicWidth(rosImageView.getWidth());
-              animationDrawable.addFrame(nDrawable,1000);
-*/
-
+              if(timeoutDuration_mSecs >= 0)//only display the last frame until timeoutDuration has elapsed
+              {
+                animationDrawable.addFrame(shapeDrawable, timeoutDuration_mSecs);
+                animationDrawable.addFrame(new ShapeDrawable(new PathShape(new Path(),0,0)),0); //stop displaying
+              } else { //display last frame indefinitely
+                  animationDrawable.addFrame(shapeDrawable, 1000 ); //think it will be left there until something clears it so time shouldn't matter
+              }
 
               animationDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
               animationDrawable.setOneShot(true); //do not auto-restart the animation
@@ -136,7 +119,25 @@
           }
         });
       }
+private ShapeDrawable addPointToShapeDrawablePath(float x, float y, Path path){
+    // add point to path
+    path.lineTo(x,y);
 
+    // make local copy of path and store in new ShapeDrawable
+    Path currPath = new Path(path);
+
+    ShapeDrawable shapeDrawable = new ShapeDrawable();
+    shapeDrawable.getPaint().setColor(Color.RED);
+    shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
+    shapeDrawable.getPaint().setStrokeWidth(10);
+    shapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
+    shapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
+    shapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+
+    shapeDrawable.setShape(new PathShape(currPath,rosImageView.getWidth(),rosImageView.getHeight()));
+
+    return shapeDrawable;
+}
       @Override
       protected void init(NodeMainExecutor nodeMainExecutor) {
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress());
