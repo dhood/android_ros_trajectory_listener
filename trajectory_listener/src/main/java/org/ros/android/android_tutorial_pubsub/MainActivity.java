@@ -17,6 +17,7 @@
     package org.ros.android.android_tutorial_pubsub;
 
     import android.graphics.Color;
+    import android.graphics.CornerPathEffect;
     import android.graphics.Paint;
     import android.graphics.Path;
     import android.graphics.drawable.AnimationDrawable;
@@ -130,6 +131,10 @@ private ShapeDrawable addPointToShapeDrawablePath(float x, float y, Path path){
     shapeDrawable.getPaint().setColor(Color.RED);
     shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
     shapeDrawable.getPaint().setStrokeWidth(10);
+    shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);
+    shapeDrawable.getPaint().setStrokeCap(Paint.Cap.ROUND);
+    shapeDrawable.getPaint().setPathEffect(new CornerPathEffect(30));
+    shapeDrawable.getPaint().setAntiAlias(true);          // set anti alias so it smooths
     shapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
     shapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
     shapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
