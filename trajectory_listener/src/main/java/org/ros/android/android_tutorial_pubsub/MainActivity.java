@@ -19,7 +19,6 @@ package org.ros.android.android_tutorial_pubsub;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
@@ -36,12 +35,10 @@ import org.ros.message.Duration;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
-import java.util.Iterator;
 import java.util.List;
 
-import geometry_msgs.Vector3;
-import trajectory_msgs.MultiDOFJointTrajectory;
-import trajectory_msgs.MultiDOFJointTrajectoryPoint;
+import geometry_msgs.PoseStamped;
+import nav_msgs.Path;
 /**
  * @author damonkohler@google.com (Damon Kohler). modified by Deanna Hood.
  */
@@ -53,7 +50,7 @@ public class MainActivity extends RosActivity {
     private double PPI_tablet = 298.9; //pixels per inch of android tablet
     private int[] resolution_tablet = {2560, 1600};
     private double MM2INCH = 0.0393701; //number of millimetres in one inch (for conversions)
-  private RosImageView<MultiDOFJointTrajectory> rosImageView;
+  private RosImageView<nav_msgs.Path> rosImageView;
 
 
   public MainActivity() {
@@ -67,48 +64,48 @@ public class MainActivity extends RosActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
-    rosImageView = (RosImageView<MultiDOFJointTrajectory>) findViewById(R.id.image);
+    rosImageView = (RosImageView<nav_msgs.Path>) findViewById(R.id.image);
     rosImageView.setTopicName("write_traj");
-    rosImageView.setMessageType(MultiDOFJointTrajectory._TYPE);
+    rosImageView.setMessageType(nav_msgs.Path._TYPE);
 
-    rosImageView.setMessageToDrawableCallable(new MessageCallable<Drawable, MultiDOFJointTrajectory>() {
+    rosImageView.setMessageToDrawableCallable(new MessageCallable<Drawable, nav_msgs.Path>() {
       @Override
-      public Drawable call(MultiDOFJointTrajectory message) {
+      public Drawable call(nav_msgs.Path message) {
           Log.e(TAG, "got a message");
 
-          ShapeDrawable blankShapeDrawable=new ShapeDrawable(new PathShape(new Path(),0,0));
+          ShapeDrawable blankShapeDrawable=new ShapeDrawable(new PathShape(new android.graphics.Path(),0,0));
           blankShapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
           blankShapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
           blankShapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
 
-          List<MultiDOFJointTrajectoryPoint> points = message.getPoints();
+          List<PoseStamped> points = message.getPoses();
           AnimationDrawable animationDrawable = new AnimationDrawable();
 
-          Path trajPath = new Path();
-          trajPath.moveTo((float)M2PX(points.get(0).getTransforms().get(0).getTranslation().getX()),resolution_tablet[0] - (float)M2PX(points.get(0).getTransforms().get(0).getTranslation().getY()));
+          android.graphics.Path trajPath = new android.graphics.Path();
+          trajPath.moveTo((float)M2PX(points.get(0).getPose().getPosition().getX()),resolution_tablet[0] - (float)M2PX(points.get(0).getPose().getPosition().getY()));
 
-          long timeUntilFirstFrame_msecs = points.get(0).getTimeFromStart().totalNsecs()/1000000;
+          long timeUntilFirstFrame_msecs = points.get(0).getHeader().getStamp().totalNsecs()/1000000;
           animationDrawable.addFrame(blankShapeDrawable,(int)timeUntilFirstFrame_msecs);
 
 
           for(int i = 0; i < points.size()-1; i++) //special case for first and last point/frame of trajectory
           {
               //add new trajectory point onto path and create ShapeDrawable to pass as a frame for animation
-              MultiDOFJointTrajectoryPoint p = points.get(i);
-              Vector3 tx = p.getTransforms().get(0).getTranslation();
+              PoseStamped p = points.get(i);
+              geometry_msgs.Point tx = p.getPose().getPosition();
 
               ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) M2PX(tx.getX()), resolution_tablet[0] - (float) M2PX(tx.getY()), trajPath);
 
               //determine the duration of the frame for the animation
-              Duration frameDuration = points.get(i + 1).getTimeFromStart().subtract(p.getTimeFromStart()); // take difference between times to get appropriate duration for frame to be displayed
+              Duration frameDuration = points.get(i + 1).getHeader().getStamp().subtract(p.getHeader().getStamp()); // take difference between times to get appropriate duration for frame to be displayed
 
               long dt_msecs = frameDuration.totalNsecs()/1000000;
               animationDrawable.addFrame(shapeDrawable,(int)dt_msecs); //unless the duration is over 2mil seconds the cast is ok
 
           }
           //cover end case
-          MultiDOFJointTrajectoryPoint p = points.get(points.size()-1);
-          Vector3 tx = p.getTransforms().get(0).getTranslation();
+          PoseStamped p = points.get(points.size()-1);
+          geometry_msgs.Point tx = p.getPose().getPosition();
 
           ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) M2PX(tx.getX()), resolution_tablet[0] - (float) M2PX(tx.getY()), trajPath);
 
@@ -128,12 +125,12 @@ public class MainActivity extends RosActivity {
       }
     });
   }
-private ShapeDrawable addPointToShapeDrawablePath(float x, float y, Path path){
+private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.graphics.Path path){
 // add point to path
     path.lineTo(x,y);
 
     // make local copy of path and store in new ShapeDrawable
-    Path currPath = new Path(path);
+    android.graphics.Path currPath = new android.graphics.Path(path);
 
     ShapeDrawable shapeDrawable = new ShapeDrawable();
     shapeDrawable.getPaint().setColor(Color.RED);
