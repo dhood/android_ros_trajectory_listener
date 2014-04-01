@@ -22,7 +22,6 @@ import android.graphics.Paint;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.graphics.drawable.shapes.PathShape;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,6 +33,8 @@ import org.ros.android.view.RosImageView;
 import org.ros.message.Duration;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
+import org.ros.time.NtpTimeProvider;
+import java.util.concurrent.TimeUnit;
 
 import java.util.List;
 
@@ -69,60 +70,59 @@ public class MainActivity extends RosActivity {
     rosImageView.setMessageType(nav_msgs.Path._TYPE);
 
     rosImageView.setMessageToDrawableCallable(new MessageCallable<Drawable, nav_msgs.Path>() {
-      @Override
-      public Drawable call(nav_msgs.Path message) {
-          Log.e(TAG, "got a message");
+        @Override
+        public Drawable call(nav_msgs.Path message) {
 
-          ShapeDrawable blankShapeDrawable=new ShapeDrawable(new PathShape(new android.graphics.Path(),0,0));
-          blankShapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
-          blankShapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
-          blankShapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+            ShapeDrawable blankShapeDrawable = new ShapeDrawable(new PathShape(new android.graphics.Path(), 0, 0));
+            blankShapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
+            blankShapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
+            blankShapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
 
-          List<PoseStamped> points = message.getPoses();
-          AnimationDrawable animationDrawable = new AnimationDrawable();
+            List<PoseStamped> points = message.getPoses();
+            AnimationDrawable animationDrawable = new AnimationDrawable();
 
-          android.graphics.Path trajPath = new android.graphics.Path();
-          trajPath.moveTo((float)M2PX(points.get(0).getPose().getPosition().getX()),resolution_tablet[0] - (float)M2PX(points.get(0).getPose().getPosition().getY()));
+            android.graphics.Path trajPath = new android.graphics.Path();
+            trajPath.moveTo((float) M2PX(points.get(0).getPose().getPosition().getX()), resolution_tablet[1] - (float) M2PX(points.get(0).getPose().getPosition().getY()));
 
-          long timeUntilFirstFrame_msecs = points.get(0).getHeader().getStamp().totalNsecs()/1000000;
-          animationDrawable.addFrame(blankShapeDrawable,(int)timeUntilFirstFrame_msecs);
-
-
-          for(int i = 0; i < points.size()-1; i++) //special case for first and last point/frame of trajectory
-          {
-              //add new trajectory point onto path and create ShapeDrawable to pass as a frame for animation
-              PoseStamped p = points.get(i);
-              geometry_msgs.Point tx = p.getPose().getPosition();
-
-              ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) M2PX(tx.getX()), resolution_tablet[0] - (float) M2PX(tx.getY()), trajPath);
-
-              //determine the duration of the frame for the animation
-              Duration frameDuration = points.get(i + 1).getHeader().getStamp().subtract(p.getHeader().getStamp()); // take difference between times to get appropriate duration for frame to be displayed
-
-              long dt_msecs = frameDuration.totalNsecs()/1000000;
-              animationDrawable.addFrame(shapeDrawable,(int)dt_msecs); //unless the duration is over 2mil seconds the cast is ok
-
-          }
-          //cover end case
-          PoseStamped p = points.get(points.size()-1);
-          geometry_msgs.Point tx = p.getPose().getPosition();
-
-          ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) M2PX(tx.getX()), resolution_tablet[0] - (float) M2PX(tx.getY()), trajPath);
+            long timeUntilFirstFrame_msecs = points.get(0).getHeader().getStamp().totalNsecs() / 1000000;
+            animationDrawable.addFrame(blankShapeDrawable, (int) timeUntilFirstFrame_msecs);
 
 
-          if(timeoutDuration_mSecs >= 0)//only display the last frame until timeoutDuration has elapsed
-          {
-            animationDrawable.addFrame(shapeDrawable, timeoutDuration_mSecs);
-            animationDrawable.addFrame(blankShapeDrawable,0); //stop displaying
-          } else { //display last frame indefinitely
-              animationDrawable.addFrame(shapeDrawable, 1000 ); //think it will be left there until something clears it so time shouldn't matter
-          }
+            for (int i = 0; i < points.size() - 1; i++) //special case for last point/frame of trajectory
+            {
+                //add new trajectory point onto path and create ShapeDrawable to pass as a frame for animation
+                PoseStamped p = points.get(i);
+                geometry_msgs.Point tx = p.getPose().getPosition();
 
-          animationDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
-          animationDrawable.setOneShot(true); //do not auto-restart the animation
+                ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) M2PX(tx.getX()), resolution_tablet[1] - (float) M2PX(tx.getY()), trajPath);
 
-          return animationDrawable;//message.getHeader().getFrameId();
-      }
+                //determine the duration of the frame for the animation
+                Duration frameDuration = points.get(i + 1).getHeader().getStamp().subtract(p.getHeader().getStamp()); // take difference between times to get appropriate duration for frame to be displayed
+
+                long dt_msecs = frameDuration.totalNsecs() / 1000000;
+                animationDrawable.addFrame(shapeDrawable, (int) dt_msecs); //unless the duration is over 2mil seconds the cast is ok
+
+            }
+            //cover end case
+            PoseStamped p = points.get(points.size() - 1);
+            geometry_msgs.Point tx = p.getPose().getPosition();
+
+            ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) M2PX(tx.getX()), resolution_tablet[1] - (float) M2PX(tx.getY()), trajPath);
+
+
+            if (timeoutDuration_mSecs >= 0)//only display the last frame until timeoutDuration has elapsed
+            {
+                animationDrawable.addFrame(shapeDrawable, timeoutDuration_mSecs);
+                animationDrawable.addFrame(blankShapeDrawable, 0); //stop displaying
+            } else { //display last frame indefinitely
+                animationDrawable.addFrame(shapeDrawable, 1000); //think it will be left there until something clears it so time shouldn't matter
+            }
+
+            animationDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+            animationDrawable.setOneShot(true); //do not auto-restart the animation
+
+            return animationDrawable;//message.getHeader().getFrameId();
+        }
     });
   }
 private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.graphics.Path path){
@@ -165,7 +165,13 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
     // At this point, the user has already been prompted to either enter the URI
     // of a master to use or to start a master locally.
     nodeConfiguration.setMasterUri(getMasterUri());
-    // The RosTextView is a NodeMain that must be executed in order to
+
+        NtpTimeProvider ntpTimeProvider = new NtpTimeProvider(InetAddressFactory.newFromHostString("192.168.1.6"),nodeMainExecutor.getScheduledExecutorService());
+        ntpTimeProvider.startPeriodicUpdates(1, TimeUnit.MINUTES);
+        nodeConfiguration.setTimeProvider(ntpTimeProvider);
+
+
+        // The RosTextView is a NodeMain that must be executed in order to
     // start displaying incoming messages.
       Log.e(TAG, "Ready to execute");
     nodeMainExecutor.execute(rosImageView, nodeConfiguration.setNodeName("android_gingerbread/trajectory_listener"));
