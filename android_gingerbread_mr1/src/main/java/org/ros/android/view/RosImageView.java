@@ -24,12 +24,15 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
 import org.ros.android.MessageCallable;
+import org.ros.message.Duration;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Subscriber;
+
+import nav_msgs.Path;
 
 /**
  * Displays incoming messages with a bitmap or other Drawable.
@@ -79,7 +82,7 @@ public class RosImageView<T> extends ImageView implements NodeMain {
   }
 
   @Override
-  public void onStart(ConnectedNode connectedNode) {
+  public void onStart(final ConnectedNode connectedNode) {
     Subscriber<T> subscriber = connectedNode.newSubscriber(topicName, messageType);
     subscriber.addMessageListener(new MessageListener<T>() {
       @Override
@@ -95,11 +98,18 @@ public class RosImageView<T> extends ImageView implements NodeMain {
             post(new Runnable() {
                 @Override
                 public void run() {
-                    Log.e(TAG, "setting drawable");
+                    Log.e(TAG, "got a message at " + connectedNode.getCurrentTime().toString());
 
                     drawable = (AnimationDrawable)drawableCallable.call(message);
                     setImageDrawable(drawable);
-
+                    if(message instanceof nav_msgs.Path){ // this does not belong in this class
+                        Duration delay = ((Path) message).getHeader().getStamp().subtract(connectedNode.getCurrentTime());
+                        try{Thread.sleep(Math.round(delay.totalNsecs() / 1000000.0));}
+                        catch(InterruptedException e){
+                            Log.e(TAG, "InterruptedException: " + e.getMessage());
+                        }
+                        Log.e(TAG, "executing message at " + connectedNode.getCurrentTime().toString());
+                    }
                     drawable.start();
                 }
             });

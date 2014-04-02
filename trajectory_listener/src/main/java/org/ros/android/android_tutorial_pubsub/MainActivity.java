@@ -84,9 +84,9 @@ public class MainActivity extends RosActivity {
             android.graphics.Path trajPath = new android.graphics.Path();
             trajPath.moveTo((float) M2PX(points.get(0).getPose().getPosition().getX()), resolution_tablet[1] - (float) M2PX(points.get(0).getPose().getPosition().getY()));
 
-            long timeUntilFirstFrame_msecs = points.get(0).getHeader().getStamp().totalNsecs() / 1000000;
+            long timeUntilFirstFrame_msecs = Math.round(points.get(0).getHeader().getStamp().totalNsecs() / 1000000.0);
             animationDrawable.addFrame(blankShapeDrawable, (int) timeUntilFirstFrame_msecs);
-
+            int totalTime = (int)timeUntilFirstFrame_msecs;
 
             for (int i = 0; i < points.size() - 1; i++) //special case for last point/frame of trajectory
             {
@@ -99,9 +99,9 @@ public class MainActivity extends RosActivity {
                 //determine the duration of the frame for the animation
                 Duration frameDuration = points.get(i + 1).getHeader().getStamp().subtract(p.getHeader().getStamp()); // take difference between times to get appropriate duration for frame to be displayed
 
-                long dt_msecs = frameDuration.totalNsecs() / 1000000;
+                long dt_msecs = Math.round(frameDuration.totalNsecs() / 1000000.0);
                 animationDrawable.addFrame(shapeDrawable, (int) dt_msecs); //unless the duration is over 2mil seconds the cast is ok
-
+                totalTime+=(int)dt_msecs;
             }
             //cover end case
             PoseStamped p = points.get(points.size() - 1);
@@ -117,7 +117,7 @@ public class MainActivity extends RosActivity {
             } else { //display last frame indefinitely
                 animationDrawable.addFrame(shapeDrawable, 1000); //think it will be left there until something clears it so time shouldn't matter
             }
-
+            Log.e(TAG,"Total time (in theory): " + String.valueOf(totalTime));
             animationDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
             animationDrawable.setOneShot(true); //do not auto-restart the animation
 
@@ -166,7 +166,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
     // of a master to use or to start a master locally.
     nodeConfiguration.setMasterUri(getMasterUri());
 
-        NtpTimeProvider ntpTimeProvider = new NtpTimeProvider(InetAddressFactory.newFromHostString("192.168.1.6"),nodeMainExecutor.getScheduledExecutorService());
+        NtpTimeProvider ntpTimeProvider = new NtpTimeProvider(InetAddressFactory.newFromHostString("192.168.1.5"),nodeMainExecutor.getScheduledExecutorService());
         ntpTimeProvider.startPeriodicUpdates(1, TimeUnit.MINUTES);
         nodeConfiguration.setTimeProvider(ntpTimeProvider);
 
