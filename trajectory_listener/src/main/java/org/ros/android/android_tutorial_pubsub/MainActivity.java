@@ -93,8 +93,8 @@ public class MainActivity extends RosActivity {
                 //add new trajectory point onto path and create ShapeDrawable to pass as a frame for animation
                 PoseStamped p = points.get(i);
                 geometry_msgs.Point tx = p.getPose().getPosition();
-
-                ShapeDrawable shapeDrawable = addPointToShapeDrawablePath((float) M2PX(tx.getX()), resolution_tablet[1] - (float) M2PX(tx.getY()), trajPath);
+                geometry_msgs.Point tx_next = points.get(i+1).getPose().getPosition();
+                ShapeDrawable shapeDrawable = addPointToShapeDrawablePath_quad((float) M2PX(tx.getX()), resolution_tablet[1] - (float) M2PX(tx.getY()), (float) M2PX(tx_next.getX()), resolution_tablet[1] - (float) M2PX(tx_next.getY()), trajPath);
 
                 //determine the duration of the frame for the animation
                 Duration frameDuration = points.get(i + 1).getHeader().getStamp().subtract(p.getHeader().getStamp()); // take difference between times to get appropriate duration for frame to be displayed
@@ -149,6 +149,29 @@ private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.grap
     return shapeDrawable;
 }
 
+private ShapeDrawable addPointToShapeDrawablePath_quad(float x, float y, float x_next, float y_next, android.graphics.Path path){
+// add point to path using quadratic bezier curve
+    path.quadTo(x,y,(x_next+x)/2,(y_next+y)/2);
+
+    // make local copy of path and store in new ShapeDrawable
+    android.graphics.Path currPath = new android.graphics.Path(path);
+
+    ShapeDrawable shapeDrawable = new ShapeDrawable();
+    shapeDrawable.getPaint().setColor(Color.RED);
+    shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
+    shapeDrawable.getPaint().setStrokeWidth(10);
+    shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);
+    shapeDrawable.getPaint().setStrokeCap(Paint.Cap.ROUND);
+    shapeDrawable.getPaint().setPathEffect(new CornerPathEffect(30));
+    shapeDrawable.getPaint().setAntiAlias(true);          // set anti alias so it smooths
+    shapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
+    shapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
+    shapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+
+    shapeDrawable.setShape(new PathShape(currPath,rosImageView.getWidth(),rosImageView.getHeight()));
+
+    return shapeDrawable;
+    }
 
 
 private double MM2PX(double x){ return x*MM2INCH*PPI_tablet; }
