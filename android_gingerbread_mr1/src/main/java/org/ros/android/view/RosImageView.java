@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
@@ -101,7 +102,34 @@ public class RosImageView<T> extends ImageView implements NodeMain {
                     Log.e(TAG, "got a message at " + connectedNode.getCurrentTime().toString());
 
                     drawable = (AnimationDrawable)drawableCallable.call(message);
-                    setImageDrawable(drawable);
+
+                    LayerDrawable layerDrawable;
+                    Drawable currentDrawable = getDrawable();
+                    if(currentDrawable == null){ //first drawable
+                        setImageDrawable(drawable);
+                    }else{
+                        if(currentDrawable instanceof LayerDrawable){ //already a layerDrawable
+                            //add new layer
+                            int numExistingLayers = ((LayerDrawable) currentDrawable).getNumberOfLayers();
+                            Drawable[] layers = new Drawable[numExistingLayers+1];
+                            for(int i = 0; i<numExistingLayers; i++){
+                                layers[i] = ((LayerDrawable) currentDrawable).getDrawable(i);
+                            }
+                            layers[numExistingLayers] = drawable;
+                            layerDrawable = new LayerDrawable(layers);
+                            setImageDrawable(layerDrawable);
+                        }
+                        else{
+                            //turn into layerDrawable
+                            Drawable[] layers = new Drawable[2];
+                            layers[0] = currentDrawable;
+                            layers[1] = drawable;
+                            layerDrawable = new LayerDrawable(layers);
+                            setImageDrawable(layerDrawable);
+                        }
+                    }
+
+
                     if(message instanceof nav_msgs.Path){ // this does not belong in this class
                         Duration delay = ((Path) message).getHeader().getStamp().subtract(connectedNode.getCurrentTime());
                         try{Thread.sleep(Math.round(delay.totalNsecs() / 1000000.0));}
