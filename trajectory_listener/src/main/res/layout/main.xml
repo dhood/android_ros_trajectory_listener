@@ -14,12 +14,19 @@
 
 <!-- copied from android_tutorial_image_transport -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
 android:orientation="vertical" android:layout_width="fill_parent"
 android:layout_height="fill_parent">
-<org.ros.android.view.RosImageView
+    <Button
+        android:id="@+id/buttonClear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="Clear"/>
+<org.ros.android.shape_learner.DisplayManager
     android:layout_height="fill_parent"
-    android:id="@+id/image" android:layout_width="fill_parent">
+    android:id="@+id/image" android:layout_width="fill_parent"
+    android:baselineAligned="false">
     <!--android:src="@drawable/icon"-->
-</org.ros.android.view.RosImageView>
-</LinearLayout>
+</org.ros.android.shape_learner.DisplayManager>
+</FrameLayout>

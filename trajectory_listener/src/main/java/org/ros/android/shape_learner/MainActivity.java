@@ -23,6 +23,7 @@ import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -37,6 +38,10 @@ import org.ros.node.NodeMainExecutor;
 import org.ros.time.NtpTimeProvider;
 import java.util.concurrent.TimeUnit;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+
 import java.util.List;
 
 import geometry_msgs.PoseStamped;
@@ -48,16 +53,16 @@ import nav_msgs.Path;
 
 
 public class MainActivity extends RosActivity {
-    private TouchPublisher touchPublisher;
+    private InteractionManager interactionManager;
   private static final java.lang.String TAG = "trajectoryListener";
-    private int timeoutDuration_mSecs = 50000; //time in ms to leave the trajectory displayed before removing it (negative displays indefinitely)
+    private int timeoutDuration_mSecs = -1; //time in ms to leave the trajectory displayed before removing it (negative displays indefinitely)
     private double PPI_tablet = 298.9; //pixels per inch of android tablet
     private int[] resolution_tablet = {2560, 1600};
     private double MM2INCH = 0.0393701; //number of millimetres in one inch (for conversions)
-  private RosImageView<nav_msgs.Path> rosImageView;
+  private DisplayManager<nav_msgs.Path> displayManager;
+private Button buttonClear;
 
-
-  public MainActivity() {
+    public MainActivity() {
     // The RosActivity constructor configures the notification title and ticker
     // messages.
     super("Trajectory listener", "Trajectory listener");
@@ -67,19 +72,31 @@ public class MainActivity extends RosActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.main);
-    rosImageView = (RosImageView<nav_msgs.Path>) findViewById(R.id.image);
-    rosImageView.setTopicName("write_traj");
-    rosImageView.setMessageType(nav_msgs.Path._TYPE);
+      Log.e(TAG,String.valueOf(Build.VERSION.SDK_INT));
+     // if (Build.VERSION.SDK_INT < 16) {
+          getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                  WindowManager.LayoutParams.FLAG_FULLSCREEN);
+          Log.e(TAG,"Should be fullscreen now");
+      //}
+      setContentView(R.layout.main);
+      buttonClear = (Button)findViewById(R.id.buttonClear);
+      buttonClear.setOnClickListener(clearListener); // Register the onClick listener with the implementation above
 
-    rosImageView.setMessageToDrawableCallable(new MessageCallable<Drawable, nav_msgs.Path>() {
+
+
+
+      displayManager = (DisplayManager<nav_msgs.Path>) findViewById(R.id.image);
+      displayManager.setTopicName("write_traj");
+      displayManager.setMessageType(nav_msgs.Path._TYPE);
+
+      displayManager.setMessageToDrawableCallable(new MessageCallable<Drawable, nav_msgs.Path>() {
         @Override
         public Drawable call(nav_msgs.Path message) {
             double[] shapeCentre_offset = {00.0,00.0};
             ShapeDrawable blankShapeDrawable = new ShapeDrawable(new PathShape(new android.graphics.Path(), 0, 0));
-            blankShapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
-            blankShapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
-            blankShapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+            blankShapeDrawable.setIntrinsicHeight(displayManager.getHeight());
+            blankShapeDrawable.setIntrinsicWidth(displayManager.getWidth());
+            blankShapeDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
 
             List<PoseStamped> points = message.getPoses();
             AnimationDrawable animationDrawable = new AnimationDrawable();
@@ -123,13 +140,20 @@ public class MainActivity extends RosActivity {
             }
             Log.e(TAG,"Path to draw: " + String.valueOf(trajPath));
             Log.e(TAG,"Total time (in theory): " + String.valueOf(totalTime));
-            animationDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+            animationDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
             animationDrawable.setOneShot(true); //do not auto-restart the animation
 
             return animationDrawable;//message.getHeader().getFrameId();
         }
     });
   }
+
+private View.OnClickListener clearListener = new View.OnClickListener() {
+    public void onClick(View v) {
+        Log.e(TAG,"onClick() called - clear button");
+        interactionManager.publishClearScreenMessage();
+    }
+};
 
 private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.graphics.Path path){
 // add point to path
@@ -146,11 +170,11 @@ private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.grap
     shapeDrawable.getPaint().setStrokeCap(Paint.Cap.ROUND);
     shapeDrawable.getPaint().setPathEffect(new CornerPathEffect(30));
     shapeDrawable.getPaint().setAntiAlias(true);          // set anti alias so it smooths
-    shapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
-    shapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
-    shapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+    shapeDrawable.setIntrinsicHeight(displayManager.getHeight());
+    shapeDrawable.setIntrinsicWidth(displayManager.getWidth());
+    shapeDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
 
-    shapeDrawable.setShape(new PathShape(currPath,rosImageView.getWidth(),rosImageView.getHeight()));
+    shapeDrawable.setShape(new PathShape(currPath,displayManager.getWidth(),displayManager.getHeight()));
 
     return shapeDrawable;
 }
@@ -170,11 +194,11 @@ private ShapeDrawable addPointToShapeDrawablePath_quad(float x, float y, float x
     shapeDrawable.getPaint().setStrokeCap(Paint.Cap.ROUND);
     shapeDrawable.getPaint().setPathEffect(new CornerPathEffect(30));
     shapeDrawable.getPaint().setAntiAlias(true);          // set anti alias so it smooths
-    shapeDrawable.setIntrinsicHeight(rosImageView.getHeight());
-    shapeDrawable.setIntrinsicWidth(rosImageView.getWidth());
-    shapeDrawable.setBounds(0, 0, rosImageView.getWidth(), rosImageView.getHeight());
+    shapeDrawable.setIntrinsicHeight(displayManager.getHeight());
+    shapeDrawable.setIntrinsicWidth(displayManager.getWidth());
+    shapeDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
 
-    shapeDrawable.setShape(new PathShape(currPath,rosImageView.getWidth(),rosImageView.getHeight()));
+    shapeDrawable.setShape(new PathShape(currPath,displayManager.getWidth(),displayManager.getHeight()));
 
     return shapeDrawable;
     }
@@ -190,8 +214,10 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
 
     @Override
   protected void init(NodeMainExecutor nodeMainExecutor) {
-    touchPublisher = new TouchPublisher();
-    touchPublisher.setTopicName("touch_info");
+        interactionManager = new InteractionManager();
+        interactionManager.setTouchInfoTopicName("touch_info");
+        interactionManager.setClearScreenTopicName("clear_screen");
+        displayManager.setClearScreenTopicName("clear_screen");
 
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress());
     // At this point, the user has already been prompted to either enter the URI
@@ -206,8 +232,8 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
         // The RosTextView is a NodeMain that must be executed in order to
     // start displaying incoming messages.
       Log.e(TAG, "Ready to execute");
-    nodeMainExecutor.execute(rosImageView, nodeConfiguration.setNodeName("android_gingerbread/trajectory_listener"));
-    nodeMainExecutor.execute(touchPublisher, nodeConfiguration.setNodeName("android_gingerbread/touch_publisher"));
+    nodeMainExecutor.execute(displayManager, nodeConfiguration.setNodeName("android_gingerbread/trajectory_listener"));
+    nodeMainExecutor.execute(interactionManager, nodeConfiguration.setNodeName("android_gingerbread/interaction_manager"));
 
   }
 
@@ -224,7 +250,8 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
                 int y = (int)event.getY();
                 Log.e(TAG, "Touch at: ["+String.valueOf(x)+", "+String.valueOf(y)+"]");
                 //publish touch event in world coordinates instead of tablet coordinates
-                touchPublisher.publishMessage(PX2M(x),PX2M(resolution_tablet[1]-y));
+                interactionManager.publishTouchInfoMessage(PX2M(x), PX2M(resolution_tablet[1] - y));
+
                 break;
         }
         return true;
