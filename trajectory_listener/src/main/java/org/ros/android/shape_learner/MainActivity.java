@@ -54,13 +54,13 @@ import nav_msgs.Path;
 
 public class MainActivity extends RosActivity {
     private InteractionManager interactionManager;
-  private static final java.lang.String TAG = "trajectoryListener";
+    private static final java.lang.String TAG = "trajectoryListener";
     private int timeoutDuration_mSecs = -1; //time in ms to leave the trajectory displayed before removing it (negative displays indefinitely)
     private double PPI_tablet = 298.9; //pixels per inch of android tablet
     private int[] resolution_tablet = {2560, 1600};
     private double MM2INCH = 0.0393701; //number of millimetres in one inch (for conversions)
-  private DisplayManager<nav_msgs.Path> displayManager;
-private Button buttonClear;
+    private DisplayManager<nav_msgs.Path> displayManager;
+    private Button buttonClear;
 
     public MainActivity() {
     // The RosActivity constructor configures the notification title and ticker
@@ -143,10 +143,23 @@ private Button buttonClear;
             animationDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
             animationDrawable.setOneShot(true); //do not auto-restart the animation
 
-            return animationDrawable;//message.getHeader().getFrameId();
+            // Pass our animation drawable to drawable class with callback on finish
+            AnimationDrawableWithEndCallback animationDrawableWithEndCallback = new AnimationDrawableWithEndCallback(animationDrawable) {
+                @Override
+                void onAnimationFinish() {
+                    // Animation has finished...
+                    onShapeDrawingFinish();
+                }
+            };
+            return animationDrawableWithEndCallback;
         }
     });
   }
+
+private void onShapeDrawingFinish(){
+    Log.e(TAG,"Animation finished!");
+    displayManager.publishShapeFinishedMessage();
+}
 
 private View.OnClickListener clearListener = new View.OnClickListener() {
     public void onClick(View v) {
@@ -218,6 +231,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
         interactionManager.setTouchInfoTopicName("touch_info");
         interactionManager.setClearScreenTopicName("clear_screen");
         displayManager.setClearScreenTopicName("clear_screen");
+        displayManager.setFinishedShapeTopicName("shape_finished");
 
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress());
     // At this point, the user has already been prompted to either enter the URI

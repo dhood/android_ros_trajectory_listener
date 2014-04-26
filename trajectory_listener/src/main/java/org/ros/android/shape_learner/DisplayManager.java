@@ -33,10 +33,13 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.NodeMain;
+import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
+import java.lang.String;
+
 import nav_msgs.Path;
-import std_msgs.Empty;
+import std_msgs.*;
 
 /**
  * Displays incoming messages with a bitmap or other Drawable.
@@ -52,6 +55,8 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
   private MessageCallable<Drawable, T> drawableCallable;
     private AnimationDrawable drawable;
     private String clearScreenTopicName;
+    private Publisher<std_msgs.String> finishedShapePublisher;
+    private String finishedShapeTopicName;
 
     public DisplayManager(Context context) {
     super(context);
@@ -65,11 +70,11 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
     super(context, attrs, defStyle);
   }
 
-  public void setTopicName(String topicName) {
-    this.topicName = topicName;
-  }
+  public void setTopicName(String topicName) { this.topicName = topicName; }
     public void setClearScreenTopicName(String topicName) {
         this.clearScreenTopicName = topicName;
+    }
+    public void setFinishedShapeTopicName(String topicName) { this.finishedShapeTopicName = topicName;
     }
 
   public void setMessageType(String messageType) {
@@ -108,7 +113,7 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
                 public void run() {
                     Log.e(TAG, "got a message at " + connectedNode.getCurrentTime().toString());
 
-                    drawable = (AnimationDrawable)drawableCallable.call(message);
+                    drawable = (AnimationDrawableWithEndCallback)drawableCallable.call(message);
 
                     LayerDrawable layerDrawable;
                     Drawable currentDrawable = getDrawable();
@@ -171,8 +176,15 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
               });
           }
       });
+      this.finishedShapePublisher =
+              connectedNode.newPublisher(finishedShapeTopicName, std_msgs.String._TYPE);
 
-
+  }
+  public void publishShapeFinishedMessage(){
+      Log.e(TAG, "Publishing shape finished message.");
+      std_msgs.String message = finishedShapePublisher.newMessage();
+      message.setData(String.valueOf(true));
+      finishedShapePublisher.publish(message);
   }
 
   @Override
