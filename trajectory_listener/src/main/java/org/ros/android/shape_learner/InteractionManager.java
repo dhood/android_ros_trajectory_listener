@@ -38,12 +38,15 @@ class InteractionManager extends AbstractNodeMain {
     private String touchInfoTopicName;
     private ConnectedNode connectedNode;
     private Publisher<PointStamped> touchInfoPublisher;
+    private Publisher<PointStamped> gestureInfoPublisher;
+    private String gestureInfoTopicName;
     private Publisher<Empty> clearScreenPublisher;
     private String clearScreenTopicName;
 
     public void setTouchInfoTopicName(String topicName) {
         this.touchInfoTopicName = topicName;
     }
+    public void setGestureInfoTopicName(String topicName) { this.gestureInfoTopicName = topicName; }
     public void setClearScreenTopicName(String topicName) {
         this.clearScreenTopicName = topicName;
     }
@@ -58,6 +61,8 @@ class InteractionManager extends AbstractNodeMain {
          this.connectedNode = connectedNode;
         this.touchInfoPublisher =
                 connectedNode.newPublisher(touchInfoTopicName, geometry_msgs.PointStamped._TYPE);
+        this.gestureInfoPublisher =
+                connectedNode.newPublisher(gestureInfoTopicName, geometry_msgs.PointStamped._TYPE);
         this.clearScreenPublisher =
                 connectedNode.newPublisher(clearScreenTopicName, Empty._TYPE);
 
@@ -73,7 +78,16 @@ class InteractionManager extends AbstractNodeMain {
       touchInfoPublisher.publish(pointStamped);
 
   }
+    public void publishGestureInfoMessage(double x, double y) {
 
+        geometry_msgs.PointStamped pointStamped = gestureInfoPublisher.newMessage();
+        pointStamped.getHeader().setStamp(connectedNode.getCurrentTime());
+        pointStamped.getPoint().setX(x);
+        pointStamped.getPoint().setY(y);
+
+        gestureInfoPublisher.publish(pointStamped);
+
+    }
     public void publishClearScreenMessage(){
         Log.e(TAG, "Publishing clear screen request");
         Empty message = clearScreenPublisher.newMessage();

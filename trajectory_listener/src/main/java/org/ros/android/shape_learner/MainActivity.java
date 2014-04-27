@@ -37,6 +37,8 @@ import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.time.NtpTimeProvider;
 import java.util.concurrent.TimeUnit;
+
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -61,7 +63,8 @@ public class MainActivity extends RosActivity {
     private double MM2INCH = 0.0393701; //number of millimetres in one inch (for conversions)
     private DisplayManager<nav_msgs.Path> displayManager;
     private Button buttonClear;
-
+    private GestureDetector gestureDetector;
+    private boolean longClicked = true;
     public MainActivity() {
     // The RosActivity constructor configures the notification title and ticker
     // messages.
@@ -154,6 +157,19 @@ public class MainActivity extends RosActivity {
             return animationDrawableWithEndCallback;
         }
     });
+
+
+      gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+          @Override
+          public void onLongPress(MotionEvent e) {
+              float x = e.getX();
+              float y = e.getY();
+              Log.e(TAG, "Double tap at: ["+String.valueOf(x)+", "+String.valueOf(y)+"]");
+              //publish touch event in world coordinates instead of tablet coordinates
+              interactionManager.publishGestureInfoMessage(PX2M(x), PX2M(resolution_tablet[1] - y));
+              longClicked = true;
+          }
+      });
   }
 
 private void onShapeDrawingFinish(){
@@ -229,6 +245,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
   protected void init(NodeMainExecutor nodeMainExecutor) {
         interactionManager = new InteractionManager();
         interactionManager.setTouchInfoTopicName("touch_info");
+        interactionManager.setGestureInfoTopicName("long_touch_info");
         interactionManager.setClearScreenTopicName("clear_screen");
         displayManager.setClearScreenTopicName("clear_screen");
         displayManager.setFinishedShapeTopicName("shape_finished");
@@ -253,21 +270,25 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
+        gestureDetector.onTouchEvent(event);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                longClicked = false;
                 break;
             case MotionEvent.ACTION_MOVE:
                 break;
             case MotionEvent.ACTION_UP:
-                int x = (int)event.getX();
-                int y = (int)event.getY();
-                Log.e(TAG, "Touch at: ["+String.valueOf(x)+", "+String.valueOf(y)+"]");
-                //publish touch event in world coordinates instead of tablet coordinates
-                interactionManager.publishTouchInfoMessage(PX2M(x), PX2M(resolution_tablet[1] - y));
-
+                if(!longClicked){
+                    int x = (int)event.getX();
+                    int y = (int)event.getY();
+                    Log.e(TAG, "Touch at: ["+String.valueOf(x)+", "+String.valueOf(y)+"]");
+                    //publish touch event in world coordinates instead of tablet coordinates
+                    interactionManager.publishTouchInfoMessage(PX2M(x), PX2M(resolution_tablet[1] - y));
+                }
                 break;
         }
+
+
         return true;
     }
 }
