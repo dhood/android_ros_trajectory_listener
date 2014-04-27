@@ -49,6 +49,7 @@ import std_msgs.*;
  */
 public class DisplayManager<T> extends ImageView implements NodeMain {
     private static final java.lang.String TAG = "DisplayManager";
+    private static final boolean SHOW_SHAPE_STRAIGHT_AWAY = false; //if using a simulated time, this should be true, so don't wait until the requested start time of shape
   private String topicName;
   private String messageType;
   private MessageCallable<Bitmap, T> bitmapCallable;
@@ -144,9 +145,11 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
 
                     if(message instanceof nav_msgs.Path){ // this does not belong in this class
                         Duration delay = ((Path) message).getHeader().getStamp().subtract(connectedNode.getCurrentTime());
-                        try{Thread.sleep(Math.round(delay.totalNsecs() / 1000000.0));}
-                        catch(InterruptedException e){
-                            Log.e(TAG, "InterruptedException: " + e.getMessage());
+                        if(!SHOW_SHAPE_STRAIGHT_AWAY){
+                            try{Thread.sleep(Math.round(delay.totalNsecs() / 1000000.0));}
+                            catch(InterruptedException e){
+                                Log.e(TAG, "InterruptedException: " + e.getMessage());
+                            }
                         }
                         Log.e(TAG, "executing message at " + connectedNode.getCurrentTime().toString());
                     }
