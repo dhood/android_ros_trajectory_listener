@@ -85,7 +85,7 @@ public class MainActivity extends RosActivity {
       buttonClear = (Button)findViewById(R.id.buttonClear);
       buttonClear.setOnClickListener(clearListener); // Register the onClick listener with the implementation above
 
-
+      final double rate = 1.0;
 
 
       displayManager = (DisplayManager<nav_msgs.Path>) findViewById(R.id.image);
@@ -108,7 +108,7 @@ public class MainActivity extends RosActivity {
             trajPath.moveTo((float) (M2PX(points.get(0).getPose().getPosition().getX()) + shapeCentre_offset[0]), resolution_tablet[1] - (float) (M2PX(points.get(0).getPose().getPosition().getY()) + shapeCentre_offset[1]));
 
             long timeUntilFirstFrame_msecs = Math.round(points.get(0).getHeader().getStamp().totalNsecs() / 1000000.0);
-            animationDrawable.addFrame(blankShapeDrawable, (int) timeUntilFirstFrame_msecs);
+            animationDrawable.addFrame(blankShapeDrawable, (int) (timeUntilFirstFrame_msecs/rate));
             int totalTime = (int)timeUntilFirstFrame_msecs;
 
             for (int i = 0; i < points.size() - 1; i++) //special case for last point/frame of trajectory
@@ -123,7 +123,7 @@ public class MainActivity extends RosActivity {
                 Duration frameDuration = points.get(i + 1).getHeader().getStamp().subtract(p.getHeader().getStamp()); // take difference between times to get appropriate duration for frame to be displayed
 
                 long dt_msecs = Math.round(frameDuration.totalNsecs() / 1000000.0);
-                animationDrawable.addFrame(shapeDrawable, (int) dt_msecs); //unless the duration is over 2mil seconds the cast is ok
+                animationDrawable.addFrame(shapeDrawable, (int) (dt_msecs/rate)); //unless the duration is over 2mil seconds the cast is ok
                 totalTime+=(int)dt_msecs;
             }
             //cover end case
@@ -136,12 +136,11 @@ public class MainActivity extends RosActivity {
 
             if (timeoutDuration_mSecs >= 0)//only display the last frame until timeoutDuration has elapsed
             {
-                animationDrawable.addFrame(shapeDrawable, timeoutDuration_mSecs);
+                animationDrawable.addFrame(shapeDrawable, (int) (timeoutDuration_mSecs/rate));
                 animationDrawable.addFrame(blankShapeDrawable, 0); //stop displaying
             } else { //display last frame indefinitely
                 animationDrawable.addFrame(shapeDrawable, 1000); //think it will be left there until something clears it so time shouldn't matter
             }
-            Log.e(TAG,"Path to draw: " + String.valueOf(trajPath));
             Log.e(TAG,"Total time (in theory): " + String.valueOf(totalTime));
             animationDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
             animationDrawable.setOneShot(true); //do not auto-restart the animation
