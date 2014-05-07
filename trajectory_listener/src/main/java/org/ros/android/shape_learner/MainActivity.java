@@ -30,12 +30,12 @@ import android.util.Log;
 import org.ros.address.InetAddressFactory;
 import org.ros.android.MessageCallable;
 import org.ros.android.RosActivity;
-import org.ros.android.android_tutorial_pubsub.R;
-import org.ros.android.view.RosImageView;
 import org.ros.message.Duration;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.time.NtpTimeProvider;
+
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import android.view.GestureDetector;
@@ -48,7 +48,6 @@ import java.util.List;
 
 import geometry_msgs.PoseStamped;
 
-import nav_msgs.Path;
 /**
  * @author damonkohler@google.com (Damon Kohler). modified by Deanna Hood.
  */
@@ -62,6 +61,7 @@ public class MainActivity extends RosActivity {
     private int[] resolution_tablet = {2560, 1600};
     private double MM2INCH = 0.0393701; //number of millimetres in one inch (for conversions)
     private DisplayManager<nav_msgs.Path> displayManager;
+    private SignatureView userDrawingsView;
     private Button buttonClear;
     private GestureDetector gestureDetector;
     private boolean longClicked = true;
@@ -85,8 +85,17 @@ public class MainActivity extends RosActivity {
       buttonClear = (Button)findViewById(R.id.buttonClear);
       buttonClear.setOnClickListener(clearListener); // Register the onClick listener with the implementation above
 
-      final double rate = 1.0;
+      final double rate = 5.0;
 
+
+      userDrawingsView = (SignatureView)findViewById(R.id.signature);
+      userDrawingsView.setStrokeFinishedCallable(new MessageCallable<Integer, ArrayList<double[]>>() {
+          @Override
+          public Integer call(ArrayList<double[]>  message) {
+              onStrokeDrawingFinished(message);
+              return 1;
+          }
+      });
 
       displayManager = (DisplayManager<nav_msgs.Path>) findViewById(R.id.image);
       displayManager.setTopicName("write_traj");
@@ -171,6 +180,15 @@ public class MainActivity extends RosActivity {
       });
   }
 
+    private void onStrokeDrawingFinished(ArrayList<double[]> points){
+        //convert from pixels in 'tablet frame' to metres in 'robot frame'
+        for(double[] point : points){
+            point[0] = PX2M(point[0]);                        //x coordinate
+            point[1] = PX2M(resolution_tablet[1] - point[1]); //y coordinate
+        }
+        interactionManager.publishUserDrawnShapeMessage(points);
+    }
+
 private void onShapeDrawingFinish(){
     Log.e(TAG,"Animation finished!");
     displayManager.publishShapeFinishedMessage();
@@ -248,6 +266,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
         interactionManager.setClearScreenTopicName("clear_screen");
         displayManager.setClearScreenTopicName("clear_screen");
         displayManager.setFinishedShapeTopicName("shape_finished");
+        interactionManager.setUserDrawnShapeTopicName("user_shapes");
 
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress());
     // At this point, the user has already been prompted to either enter the URI
@@ -262,7 +281,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
         // The RosTextView is a NodeMain that must be executed in order to
     // start displaying incoming messages.
       Log.e(TAG, "Ready to execute");
-    nodeMainExecutor.execute(displayManager, nodeConfiguration.setNodeName("android_gingerbread/trajectory_listener"));
+    nodeMainExecutor.execute(displayManager, nodeConfiguration.setNodeName("android_gingerbread/display_manager"));
     nodeMainExecutor.execute(interactionManager, nodeConfiguration.setNodeName("android_gingerbread/interaction_manager"));
 
   }

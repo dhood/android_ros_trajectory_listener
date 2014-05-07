@@ -16,15 +16,15 @@
 package org.ros.android.shape_learner;
 
 import android.util.Log;
-
-import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
-import org.ros.node.topic.Subscriber;
+import java.util.ArrayList;
 
 import geometry_msgs.PointStamped;
+import geometry_msgs.PoseStamped;
+import nav_msgs.Path;
 import std_msgs.Empty;
 
 /**
@@ -42,6 +42,8 @@ class InteractionManager extends AbstractNodeMain {
     private String gestureInfoTopicName;
     private Publisher<Empty> clearScreenPublisher;
     private String clearScreenTopicName;
+    private Publisher<Path> userDrawnShapePublisher;
+    private String userDrawnShapeTopicName;
 
     public void setTouchInfoTopicName(String topicName) {
         this.touchInfoTopicName = topicName;
@@ -49,6 +51,9 @@ class InteractionManager extends AbstractNodeMain {
     public void setGestureInfoTopicName(String topicName) { this.gestureInfoTopicName = topicName; }
     public void setClearScreenTopicName(String topicName) {
         this.clearScreenTopicName = topicName;
+    }
+    public void setUserDrawnShapeTopicName(String topicName) {
+        this.userDrawnShapeTopicName = topicName;
     }
 
     @Override
@@ -61,10 +66,14 @@ class InteractionManager extends AbstractNodeMain {
          this.connectedNode = connectedNode;
         this.touchInfoPublisher =
                 connectedNode.newPublisher(touchInfoTopicName, geometry_msgs.PointStamped._TYPE);
+        this.touchInfoPublisher.setLatchMode(false);
         this.gestureInfoPublisher =
                 connectedNode.newPublisher(gestureInfoTopicName, geometry_msgs.PointStamped._TYPE);
+        this.gestureInfoPublisher.setLatchMode(false);
         this.clearScreenPublisher =
                 connectedNode.newPublisher(clearScreenTopicName, Empty._TYPE);
+        this.userDrawnShapePublisher =
+                connectedNode.newPublisher(userDrawnShapeTopicName, Path._TYPE);
 
     }
 
@@ -92,5 +101,22 @@ class InteractionManager extends AbstractNodeMain {
         Log.e(TAG, "Publishing clear screen request");
         Empty message = clearScreenPublisher.newMessage();
         clearScreenPublisher.publish(message);
+    }
+
+    public void publishUserDrawnShapeMessage(ArrayList<double[]> points){
+        nav_msgs.Path message = userDrawnShapePublisher.newMessage();
+        message.getHeader().setStamp(connectedNode.getCurrentTime());
+
+        for(double[] point : points){
+            PoseStamped poseStamped = connectedNode.getTopicMessageFactory().newFromType(PoseStamped._TYPE);
+
+            poseStamped.getPose().getPosition().setX(point[0]);
+            poseStamped.getPose().getPosition().setY(point[1]);
+
+            message.getPoses().add(poseStamped);
+        }
+
+        Log.e(TAG, "Publishing user-drawn shape");
+        userDrawnShapePublisher.publish(message);
     }
 }
