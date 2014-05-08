@@ -165,7 +165,13 @@ public class MainActivity extends RosActivity {
             return animationDrawableWithEndCallback;
         }
     });
-
+      /*displayManager.setClearScreenCallable(new MessageCallable<Integer, Integer>() {
+          @Override
+          public Integer call(Integer  message) {
+              onClearScreen();
+              return 1;
+          }
+      });*/
 
       gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
           @Override
@@ -189,6 +195,10 @@ public class MainActivity extends RosActivity {
         interactionManager.publishUserDrawnShapeMessage(points);
     }
 
+   /* private void onClearScreen(){
+        userDrawingsView.clear(); //clear display of user-drawn shapes
+    }*/
+
 private void onShapeDrawingFinish(){
     Log.e(TAG,"Animation finished!");
     displayManager.publishShapeFinishedMessage();
@@ -196,8 +206,10 @@ private void onShapeDrawingFinish(){
 
 private View.OnClickListener clearListener = new View.OnClickListener() {
     public void onClick(View v) {
-        Log.e(TAG,"onClick() called - clear button");
-        interactionManager.publishClearScreenMessage();
+        Log.e(TAG, "onClick() called - clear button");
+        interactionManager.publishClearScreenMessage();  //clear display of robot-drawn message
+        userDrawingsView.clear(); //clear display of user-drawn shapes (would have liked to have
+            // done this with a callback upon receipt of clearScreenMessage, but that thread isn't allowed to 'touch' signatureView)
     }
 };
 

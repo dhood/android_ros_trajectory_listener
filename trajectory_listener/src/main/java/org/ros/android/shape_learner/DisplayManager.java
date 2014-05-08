@@ -49,13 +49,14 @@ import std_msgs.*;
  */
 public class DisplayManager<T> extends ImageView implements NodeMain {
     private static final java.lang.String TAG = "DisplayManager";
-    private static final boolean SHOW_SHAPE_STRAIGHT_AWAY = false; //if using a simulated time, this should be true, so don't wait until the requested start time of shape
+    private static final boolean SHOW_SHAPE_STRAIGHT_AWAY = true; //if using a simulated time, this should be true, so don't wait until the requested start time of shape
   private String topicName;
   private String messageType;
   private MessageCallable<Bitmap, T> bitmapCallable;
   private MessageCallable<Drawable, T> drawableCallable;
     private AnimationDrawable drawable;
     private String clearScreenTopicName;
+    private MessageCallable<Integer, Integer> clearScreenCallable;
     private Publisher<std_msgs.String> finishedShapePublisher;
     private String finishedShapeTopicName;
 
@@ -88,7 +89,10 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
   public void setMessageToDrawableCallable(MessageCallable<Drawable, T> callable) {
         this.drawableCallable = callable;
     }
-
+    /**
+     * Set which function will be called when a clear screen message is received (after clearing DisplayManager's View).
+     */
+    public void setClearScreenCallable(MessageCallable<Integer, Integer > callable) { this.clearScreenCallable = callable; }
 
     @Override
   public GraphName getDefaultNodeName() {
@@ -150,6 +154,9 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
                             catch(InterruptedException e){
                                 Log.e(TAG, "InterruptedException: " + e.getMessage());
                             }
+                            catch(IllegalArgumentException e){
+                                Log.e(TAG, "IllegalArgumentException: " + e.getMessage());
+                            }
                         }
                         Log.e(TAG, "executing message at " + connectedNode.getCurrentTime().toString());
                     }
@@ -177,6 +184,9 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
                       setImageDrawable(blankShapeDrawable);
                   }
               });
+              if (clearScreenCallable != null) {
+                clearScreenCallable.call(0); //give the opportunity for any other objects to act
+              }
           }
       });
       this.finishedShapePublisher =
