@@ -16,3 +16,4 @@
 
 include 'trajectory_listener'
 include 'android_gingerbread_mr1'
+include 'message_echoer'
