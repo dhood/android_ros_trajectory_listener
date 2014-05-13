@@ -77,40 +77,47 @@ public class SignatureView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         float eventX = event.getX();
         float eventY = event.getY();
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                path.moveTo(eventX, eventY);
-                lastTouchX = eventX;
-                lastTouchY = eventY;
-                // There is no end point yet, so don't waste cycles invalidating.
-                return true;
-
-            case MotionEvent.ACTION_MOVE:
-                drawRecentPoints(event);
-                break;
-            case MotionEvent.ACTION_UP:
-                drawRecentPoints(event);
-                strokeFinishedCallable.call(pointsOnPath);
-                pointsOnPath.clear();
-                break;
-
-            default:
-                Log.e(TAG,"Ignored touch event: " + event.toString());
-                return false;
+        Log.e(TAG, String.valueOf(event.getSource()));
+        if(event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){ //allow another to process touch events from finger
+            Log.e(TAG,"Ignored finger touch event: " + event.toString());
+            return false;
         }
+        else if(event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS){//only respond to inputs from the stylus
 
-        // Include half the stroke width to avoid clipping.
-        invalidate(
-                (int) (dirtyRect.left - HALF_STROKE_WIDTH),
-                (int) (dirtyRect.top - HALF_STROKE_WIDTH),
-                (int) (dirtyRect.right + HALF_STROKE_WIDTH),
-                (int) (dirtyRect.bottom + HALF_STROKE_WIDTH));
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    path.moveTo(eventX, eventY);
+                    lastTouchX = eventX;
+                    lastTouchY = eventY;
+                    // There is no end point yet, so don't waste cycles invalidating.
+                    return true;
 
-        lastTouchX = eventX;
-        lastTouchY = eventY;
+                case MotionEvent.ACTION_MOVE:
+                    drawRecentPoints(event);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    drawRecentPoints(event);
+                    strokeFinishedCallable.call(pointsOnPath);
+                    pointsOnPath = new ArrayList<double[]>();
+                    break;
 
+                default:
+                    Log.e(TAG,"Ignored touch event: " + event.toString());
+                    return false;
+            }
+
+            // Include half the stroke width to avoid clipping.
+            invalidate(
+                    (int) (dirtyRect.left - HALF_STROKE_WIDTH),
+                    (int) (dirtyRect.top - HALF_STROKE_WIDTH),
+                    (int) (dirtyRect.right + HALF_STROKE_WIDTH),
+                    (int) (dirtyRect.bottom + HALF_STROKE_WIDTH));
+
+            lastTouchX = eventX;
+            lastTouchY = eventY;
+        }
         return true;
+
     }
 
     /**

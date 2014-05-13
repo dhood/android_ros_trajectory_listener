@@ -26,14 +26,14 @@ android:layout_height="fill_parent">
         android:enabled="true" />
     <org.ros.android.shape_learner.DisplayManager
         android:layout_height="fill_parent"
-        android:id="@+id/image" android:layout_width="642dp"
+        android:id="@+id/image" android:layout_width="fill_parent"
         android:baselineAligned="false"
         android:layout_gravity="left">
         <!--android:src="@drawable/icon"-->
     </org.ros.android.shape_learner.DisplayManager>
     <org.ros.android.shape_learner.SignatureView
-        android:layout_height="654dp"
-        android:id="@+id/signature" android:layout_width="641dp"
+        android:layout_height="fill_parent"
+        android:id="@+id/signature" android:layout_width="fill_parent"
         android:baselineAligned="false"
         android:layout_gravity="bottom|right">
     </org.ros.android.shape_learner.SignatureView>
