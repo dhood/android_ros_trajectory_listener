@@ -14,15 +14,25 @@
  * the License.
  */
 
-
+repositories { mavenCentral() }
 dependencies {
   compile 'org.ros.rosjava_core:rosjava_tutorial_pubsub:[0.1,0.2)'
   compile 'org.ros.rosjava_messages:trajectory_msgs:1.10.+'
   compile project(':android_gingerbread_mr1')
+  compile 'com.android.support:appcompat-v7:+' 
+  compile 'org.ros.rosjava_core:rosjava:0.1.+'
 }
 
 apply plugin: 'android'
 //apply plugin: 'application'
+repositories { 
+  maven { 
+    url 'https://github.com/rosjava/rosjava_mvn_repo/raw/master' 
+    
+  } 
+  mavenCentral() 
+  
+} 
 
 android {
     packagingOptions {
@@ -30,7 +40,8 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
-    compileSdkVersion 14
+    compileSdkVersion 19
+    buildToolsVersion "19" 
 }
 
 
