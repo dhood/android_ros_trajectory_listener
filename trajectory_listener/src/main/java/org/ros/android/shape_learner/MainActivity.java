@@ -131,10 +131,17 @@ public class MainActivity extends RosActivity {
             {
                 //add new trajectory point onto path and create ShapeDrawable to pass as a frame for animation
                 PoseStamped p = points.get(i);
+                PoseStamped p_next = points.get(i+1);
                 geometry_msgs.Point tx = p.getPose().getPosition();
-                geometry_msgs.Point tx_next = points.get(i+1).getPose().getPosition();
-                ShapeDrawable shapeDrawable = addPointToShapeDrawablePath_quad((float) (shapeCentre_offset[0]+M2PX(tx.getX())), resolution_tablet[1] - (float) (shapeCentre_offset[1]+M2PX(tx.getY())), (float) (shapeCentre_offset[0]+M2PX(tx_next.getX())), resolution_tablet[1] - (float) (shapeCentre_offset[1]+M2PX(tx_next.getY())), trajPath);
-
+                geometry_msgs.Point tx_next = p_next.getPose().getPosition();
+                boolean penUp = p.getHeader().getSeq() == 1;
+                boolean penUp_next = p_next.getHeader().getSeq() == 1;
+                ShapeDrawable shapeDrawable;
+                if(penUp_next){
+                    shapeDrawable = addPointToShapeDrawablePath((float) (shapeCentre_offset[0]+M2PX(tx.getX())), resolution_tablet[1] - (float) (shapeCentre_offset[1]+M2PX(tx.getY())), trajPath, penUp);
+                }else{
+                    shapeDrawable = addPointToShapeDrawablePath_quad((float) (shapeCentre_offset[0]+M2PX(tx.getX())), resolution_tablet[1] - (float) (shapeCentre_offset[1]+M2PX(tx.getY())), (float) (shapeCentre_offset[0]+M2PX(tx_next.getX())), resolution_tablet[1] - (float) (shapeCentre_offset[1]+M2PX(tx_next.getY())), trajPath, penUp);
+                }
                 //determine the duration of the frame for the animation
                 Duration frameDuration = points.get(i + 1).getHeader().getStamp().subtract(p.getHeader().getStamp()); // take difference between times to get appropriate duration for frame to be displayed
 
@@ -144,10 +151,11 @@ public class MainActivity extends RosActivity {
             }
             //cover end case
             PoseStamped p = points.get(points.size() - 1);
+            boolean penUp = p.getHeader().getSeq() == 1;
             geometry_msgs.Point tx = p.getPose().getPosition();
             float pointToAdd_x = (float) (M2PX(tx.getX()) + shapeCentre_offset[0]);
             float pointToAdd_y = resolution_tablet[1] - (float) (M2PX(tx.getY()) + shapeCentre_offset[1]);
-            ShapeDrawable shapeDrawable = addPointToShapeDrawablePath(pointToAdd_x, pointToAdd_y, trajPath);
+            ShapeDrawable shapeDrawable = addPointToShapeDrawablePath(pointToAdd_x, pointToAdd_y, trajPath, penUp);
 
 
             if (timeoutDuration_mSecs >= 0)//only display the last frame until timeoutDuration has elapsed
@@ -156,7 +164,7 @@ public class MainActivity extends RosActivity {
                 animationDrawable.addFrame(blankShapeDrawable, 0); //stop displaying
             } else { //display last frame indefinitely
                 //don't add an extra frame unless necessary because otherwise it will delay the animationFinished message!
-                //animationDrawable.addFrame(shapeDrawable, 1000); //think it will be left there until something clears it so time shouldn't matter
+                animationDrawable.addFrame(shapeDrawable, 0); //think it will be left there until something clears it so time shouldn't matter
             }
             Log.e(TAG,"Total time (in theory): " + String.valueOf(totalTime));
             animationDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
@@ -221,9 +229,14 @@ private View.OnClickListener clearListener = new View.OnClickListener() {
     }
 };
 
-private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.graphics.Path path){
-// add point to path
-    path.lineTo(x,y);
+private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.graphics.Path path, boolean penUp){
+    if(!penUp){
+        // add point to path
+        path.lineTo(x,y);
+    }
+    else{
+        path.moveTo(x,y);
+    }
 
     // make local copy of path and store in new ShapeDrawable
     android.graphics.Path currPath = new android.graphics.Path(path);
@@ -245,10 +258,14 @@ private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.grap
     return shapeDrawable;
 }
 
-private ShapeDrawable addPointToShapeDrawablePath_quad(float x, float y, float x_next, float y_next, android.graphics.Path path){
-// add point to path using quadratic bezier curve
-    path.quadTo(x,y,(x_next+x)/2,(y_next+y)/2);
-
+private ShapeDrawable addPointToShapeDrawablePath_quad(float x, float y, float x_next, float y_next, android.graphics.Path path, boolean penUp){
+    if(!penUp){
+        // add point to path using quadratic bezier curve
+        path.quadTo(x,y,(x_next+x)/2,(y_next+y)/2);
+    }
+    else{
+        path.moveTo(x,y);
+    }
     // make local copy of path and store in new ShapeDrawable
     android.graphics.Path currPath = new android.graphics.Path(path);
 
