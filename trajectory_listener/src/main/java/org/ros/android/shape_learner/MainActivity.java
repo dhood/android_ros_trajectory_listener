@@ -155,7 +155,8 @@ public class MainActivity extends RosActivity {
                 animationDrawable.addFrame(shapeDrawable, (int) (timeoutDuration_mSecs/rate));
                 animationDrawable.addFrame(blankShapeDrawable, 0); //stop displaying
             } else { //display last frame indefinitely
-                animationDrawable.addFrame(shapeDrawable, 1000); //think it will be left there until something clears it so time shouldn't matter
+                //don't add an extra frame unless necessary because otherwise it will delay the animationFinished message!
+                //animationDrawable.addFrame(shapeDrawable, 1000); //think it will be left there until something clears it so time shouldn't matter
             }
             Log.e(TAG,"Total time (in theory): " + String.valueOf(totalTime));
             animationDrawable.setBounds(0, 0, displayManager.getWidth(), displayManager.getHeight());
