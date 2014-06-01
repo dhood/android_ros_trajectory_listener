@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <org.ros.android.view.RosTextView
+        android:id="@+id/text"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="30dip" />
+
+</LinearLayout> -->
+
+<!-- copied from android_tutorial_image_transport -->
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical" android:layout_width="fill_parent"
+android:layout_height="fill_parent">
+    <Button
+        android:id="@+id/buttonClear"
+        android:layout_width="116dp"
+        android:layout_height="69dp"
+        android:layout_gravity="left|bottom"
+        android:text="@string/clearShapeListenerView"
+        android:textSize="36dp"
+        android:enabled="true" />
+    <Button
+        android:id="@+id/buttonSend"
+        android:layout_width="116dp"
+        android:layout_height="69dp"
+        android:layout_gravity="right|bottom"
+        android:text="@string/sendMessage"
+        android:textSize="36dp"
+        android:enabled="true" />
+    <org.ros.android.message_listener.DisplayManager
+        android:layout_height="720dp"
+        android:id="@+id/image" android:layout_width="fill_parent"
+        android:baselineAligned="false"
+        android:layout_gravity="top|left">
+        <!--android:src="@drawable/icon"-->
+    </org.ros.android.message_listener.DisplayManager>
+    <org.ros.android.message_listener.SignatureView
+        android:layout_height="720dp"
+        android:id="@+id/signature" android:layout_width="fill_parent"
+        android:baselineAligned="false"
+        android:layout_gravity="top|right">
+    </org.ros.android.message_listener.SignatureView>
+
+    <TextView
+        android:layout_width="400dp"
+        android:layout_height="651dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="First letter"
+        android:id="@+id/textView"
+        android:layout_gravity="left|top"
+        android:textStyle="bold"
+        android:textSize="56dp"
+        android:background="#07000000"
+        android:textColor="#FFFFFF"
+        android:gravity="top|center"/>
+    <TextView
+        android:layout_width="400dp"
+        android:layout_height="663dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Second letter"
+        android:id="@+id/textView2"
+        android:layout_gravity="center_horizontal|top"
+        android:textStyle="bold"
+        android:background="#ffffff"
+        android:textColor="#000000"
+        android:gravity="top|center"
+        android:textSize="56dp" />
+    <TextView
+        android:layout_width="400dp"
+        android:layout_height="650dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Third letter"
+        android:id="@+id/textView3"
+        android:layout_gravity="right|top"
+        android:textStyle="bold"
+        android:background="#ffffff"
+        android:textColor="#000000"
+        android:gravity="top|center"
+        android:textSize="56dp" />
+</FrameLayout>
