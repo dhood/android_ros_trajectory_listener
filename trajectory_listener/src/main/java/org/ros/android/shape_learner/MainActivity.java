@@ -23,19 +23,24 @@ import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.MessageCallable;
 import org.ros.android.RosActivity;
+//import org.ros.android.android_gingerbread_mr1.R;
 import org.ros.message.Duration;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.time.NtpTimeProvider;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import android.view.GestureDetector;
@@ -65,6 +70,8 @@ public class MainActivity extends RosActivity {
     private Button buttonClear;
     private GestureDetector gestureDetector;
     private boolean longClicked = true;
+    private int timeBetweenWatchdogClears_ms = 500;
+
     public MainActivity() {
     // The RosActivity constructor configures the notification title and ticker
     // messages.
@@ -85,8 +92,8 @@ public class MainActivity extends RosActivity {
       buttonClear = (Button)findViewById(R.id.buttonClear);
       buttonClear.setOnClickListener(clearListener); // Register the onClick listener with the implementation above
 
-      final double rate = 5.0;
-
+      final double rate = 1.0;
+      startWatchdogClearer();
 
       userDrawingsView = (SignatureView)findViewById(R.id.signature);
       userDrawingsView.setStrokeFinishedCallable(new MessageCallable<Integer, ArrayList<double[]>>() {
@@ -277,6 +284,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
         interactionManager.setGestureInfoTopicName("long_touch_info");
         interactionManager.setClearScreenTopicName("clear_screen");
         displayManager.setClearScreenTopicName("clear_screen");
+        displayManager.setClearWatchdogTopicName("watchdog_clear/tablet");
         displayManager.setFinishedShapeTopicName("shape_finished");
         interactionManager.setUserDrawnShapeTopicName("user_shapes");
 
@@ -321,6 +329,36 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
 
         return true;
     }
+
+
+
+    public void startWatchdogClearer() {
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+        TimerTask clearWatchdog = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        try {
+                            //PerformBackgroundTask performBackgroundTask = new PerformBackgroundTask();
+                            // PerformBackgroundTask this class is the class that extends AsynchTask
+                            //performBackgroundTask.execute();
+                            displayManager.publishWatchdogClearMessage();
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                        }
+                    }
+                });
+            }
+        };
+        timer.schedule(clearWatchdog, 0, timeBetweenWatchdogClears_ms);
+    }
+
+    //class PerformBackgroundTask extends AsyncTask{
+
+    //}
+
 }
 
 

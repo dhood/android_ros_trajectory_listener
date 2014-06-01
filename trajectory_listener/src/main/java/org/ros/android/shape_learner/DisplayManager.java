@@ -49,7 +49,7 @@ import std_msgs.*;
  */
 public class DisplayManager<T> extends ImageView implements NodeMain {
     private static final java.lang.String TAG = "DisplayManager";
-    private static final boolean SHOW_SHAPE_STRAIGHT_AWAY = true; //if using a simulated time, this should be true, so don't wait until the requested start time of shape
+    private static final boolean SHOW_SHAPE_STRAIGHT_AWAY = false; //if using a simulated time, this should be true, so don't wait until the requested start time of shape
   private String topicName;
   private String messageType;
   private MessageCallable<Bitmap, T> bitmapCallable;
@@ -59,6 +59,8 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
     private MessageCallable<Integer, Integer> clearScreenCallable;
     private Publisher<std_msgs.String> finishedShapePublisher;
     private String finishedShapeTopicName;
+    private Publisher<std_msgs.Empty> clearWatchdogPublisher;
+    private String clearWatchdogTopicName;
 
     public DisplayManager(Context context) {
     super(context);
@@ -78,7 +80,9 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
     }
     public void setFinishedShapeTopicName(String topicName) { this.finishedShapeTopicName = topicName;
     }
-
+    public void setClearWatchdogTopicName(String topicName) {
+        this.clearWatchdogTopicName = topicName;
+    }
   public void setMessageType(String messageType) {
     this.messageType = messageType;
   }
@@ -191,7 +195,8 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
       });
       this.finishedShapePublisher =
               connectedNode.newPublisher(finishedShapeTopicName, std_msgs.String._TYPE);
-
+      this.clearWatchdogPublisher =
+              connectedNode.newPublisher(clearWatchdogTopicName, std_msgs.Empty._TYPE);
   }
   public void publishShapeFinishedMessage(){
       Log.e(TAG, "Publishing shape finished message.");
@@ -199,6 +204,12 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
       message.setData(String.valueOf(true));
       finishedShapePublisher.publish(message);
   }
+
+    public void publishWatchdogClearMessage(){
+        //Log.e(TAG, "Publishing clear watchdog message.");
+        std_msgs.Empty message = clearWatchdogPublisher.newMessage();
+        clearWatchdogPublisher.publish(message);
+    }
 
   @Override
   public void onShutdown(Node node) {
