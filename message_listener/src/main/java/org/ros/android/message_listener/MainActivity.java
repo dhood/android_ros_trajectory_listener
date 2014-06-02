@@ -321,7 +321,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
     nodeMainExecutor.execute(interactionManager, nodeConfiguration.setNodeName("child_tablet/interaction_manager"));
 
   }
-
+/*
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         gestureDetector.onTouchEvent(event);
@@ -345,6 +345,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
 
         return true;
     }
+*/
 }
 
 

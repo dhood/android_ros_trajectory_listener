@@ -49,38 +49,38 @@ android:layout_height="fill_parent">
 
     <TextView
         android:layout_width="400dp"
-        android:layout_height="651dp"
+        android:layout_height="61dp"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="First letter"
         android:id="@+id/textView"
         android:layout_gravity="left|top"
         android:textStyle="bold"
         android:textSize="56dp"
-        android:background="#07000000"
-        android:textColor="#FFFFFF"
-        android:gravity="top|center"/>
+        android:background="#000000"
+        android:textColor="#ffffff"
+        android:gravity="top|center" />
     <TextView
         android:layout_width="400dp"
-        android:layout_height="663dp"
+        android:layout_height="61dp"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Second letter"
         android:id="@+id/textView2"
         android:layout_gravity="center_horizontal|top"
         android:textStyle="bold"
-        android:background="#ffffff"
-        android:textColor="#000000"
+        android:background="#000000"
+        android:textColor="#ffffff"
         android:gravity="top|center"
         android:textSize="56dp" />
     <TextView
         android:layout_width="400dp"
-        android:layout_height="650dp"
+        android:layout_height="61dp"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Third letter"
         android:id="@+id/textView3"
         android:layout_gravity="right|top"
         android:textStyle="bold"
-        android:background="#ffffff"
-        android:textColor="#000000"
+        android:background="#000000"
+        android:textColor="#ffffff"
         android:gravity="top|center"
         android:textSize="56dp" />
 </FrameLayout>
