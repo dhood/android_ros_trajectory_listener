@@ -3,5 +3,6 @@
 
     <string name="app_name">TrajectoryListener</string>
     <string name="clearShapeListenerView">Clear</string>
+    <string name="sendMessage">Nao\'s \n turn</string>
 
 </resources>

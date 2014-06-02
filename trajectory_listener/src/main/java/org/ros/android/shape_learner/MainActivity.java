@@ -48,6 +48,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 import java.util.List;
 
@@ -68,9 +69,11 @@ public class MainActivity extends RosActivity {
     private DisplayManager<nav_msgs.Path> displayManager;
     private SignatureView userDrawingsView;
     private Button buttonClear;
+    private ImageButton buttonSend;
+    private ArrayList< ArrayList<double[]> > userDrawnMessage = new ArrayList<ArrayList<double[]>>();
     private GestureDetector gestureDetector;
     private boolean longClicked = true;
-    private int timeBetweenWatchdogClears_ms = 500;
+    private int timeBetweenWatchdogClears_ms = 100;
 
     public MainActivity() {
     // The RosActivity constructor configures the notification title and ticker
@@ -90,7 +93,9 @@ public class MainActivity extends RosActivity {
       //}
       setContentView(R.layout.main);
       buttonClear = (Button)findViewById(R.id.buttonClear);
-      buttonClear.setOnClickListener(clearListener); // Register the onClick listener with the implementation above
+      buttonClear.setOnClickListener(clearListener); // Register the onClick listener with the implementation below
+      buttonSend = (ImageButton)findViewById(R.id.buttonSend);
+      buttonSend.setOnClickListener(sendListener); // Register the onClick listener with the implementation below
 
       final double rate = 1.0;
       startWatchdogClearer();
@@ -208,7 +213,9 @@ public class MainActivity extends RosActivity {
             point[0] = PX2M(point[0]);                        //x coordinate
             point[1] = PX2M(resolution_tablet[1] - point[1]); //y coordinate
         }
-        interactionManager.publishUserDrawnShapeMessage(points);
+        //interactionManager.publishUserDrawnShapeMessage(points);
+        Log.e(TAG, "Adding stroke to message");
+        userDrawnMessage.add(points);
     }
 
    /* private void onClearScreen(){
@@ -219,11 +226,22 @@ private void onShapeDrawingFinish(){
     Log.e(TAG,"Animation finished!");
     displayManager.publishShapeFinishedMessage();
 }
+private View.OnClickListener sendListener = new View.OnClickListener() {
+    public void onClick(View v) {
+        Log.e(TAG, "onClick() called - send button");
+        interactionManager.publishUserDrawnMessageMessage(userDrawnMessage);
+        userDrawnMessage.clear(); //empty/reinitialise message
+        //interactionManager.publishClearScreenMessage();  //clear display of robot-drawn message
 
+        //userDrawingsView.clear(); //clear display of user-drawn shapes (would have liked to have
+        // done this with a callback upon receipt of clearScreenMessage, but that thread isn't allowed to 'touch' signatureView)
+    }
+};
 private View.OnClickListener clearListener = new View.OnClickListener() {
     public void onClick(View v) {
         Log.e(TAG, "onClick() called - clear button");
-        interactionManager.publishClearScreenMessage();  //clear display of robot-drawn message
+        //interactionManager.publishClearScreenMessage();  //clear display of robot-drawn message
+        userDrawnMessage.clear(); //empty/reinitialise message
         userDrawingsView.clear(); //clear display of user-drawn shapes (would have liked to have
             // done this with a callback upon receipt of clearScreenMessage, but that thread isn't allowed to 'touch' signatureView)
     }
@@ -242,7 +260,7 @@ private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.grap
     android.graphics.Path currPath = new android.graphics.Path(path);
 
     ShapeDrawable shapeDrawable = new ShapeDrawable();
-    shapeDrawable.getPaint().setColor(Color.RED);
+    shapeDrawable.getPaint().setColor(Color.BLUE);
     shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
     shapeDrawable.getPaint().setStrokeWidth(10);
     shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);
@@ -270,7 +288,7 @@ private ShapeDrawable addPointToShapeDrawablePath_quad(float x, float y, float x
     android.graphics.Path currPath = new android.graphics.Path(path);
 
     ShapeDrawable shapeDrawable = new ShapeDrawable();
-    shapeDrawable.getPaint().setColor(Color.RED);
+    shapeDrawable.getPaint().setColor(Color.BLUE);
     shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
     shapeDrawable.getPaint().setStrokeWidth(10);
     shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);

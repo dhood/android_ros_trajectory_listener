@@ -17,6 +17,12 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
 android:orientation="vertical" android:layout_width="fill_parent"
 android:layout_height="fill_parent" android:background="#FFFFFF">
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonSend"
+        android:layout_gravity="left|top"
+        android:background="@drawable/nao_icon" />
     <Button
         android:id="@+id/buttonClear"
         android:layout_width="wrap_content"
@@ -26,9 +32,9 @@ android:layout_height="fill_parent" android:background="#FFFFFF">
         android:enabled="true" />
     <org.ros.android.shape_learner.DisplayManager
         android:layout_height="fill_parent"
-        android:id="@+id/image" android:layout_width="fill_parent"
-        android:baselineAligned="false"
-        android:layout_gravity="left">
+        android:id="@+id/image" android:layout_width="match_parent"
+        android:layout_gravity="center"
+        android:baselineAligned="false">
         <!--android:src="@drawable/icon"-->
     </org.ros.android.shape_learner.DisplayManager>
     <org.ros.android.shape_learner.SignatureView
@@ -37,4 +43,15 @@ android:layout_height="fill_parent" android:background="#FFFFFF">
         android:baselineAligned="false"
         android:layout_gravity="bottom|right">
     </org.ros.android.shape_learner.SignatureView>
+    <!--<Button
+        android:id="@+id/buttonSend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
+        android:text="@string/sendMessage"
+        android:textSize="36dp"
+        android:enabled="true" />-->
+
+
+    <!--android:src="@drawable/button_icon"-->
 </FrameLayout>

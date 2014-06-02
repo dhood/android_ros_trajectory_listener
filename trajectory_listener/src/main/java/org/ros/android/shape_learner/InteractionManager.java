@@ -119,4 +119,12 @@ class InteractionManager extends AbstractNodeMain {
         Log.e(TAG, "Publishing user-drawn shape");
         userDrawnShapePublisher.publish(message);
     }
+
+    public void publishUserDrawnMessageMessage(ArrayList< ArrayList<double[]> > userDrawnMessage){
+        Log.e(TAG, "Publishing user-drawn message");
+        for(ArrayList<double[]> stroke : userDrawnMessage){
+            publishUserDrawnShapeMessage(stroke);
+        }
+        publishUserDrawnShapeMessage(new ArrayList<double[]>()); //publish empty stroke to show message is done
+    }
 }
