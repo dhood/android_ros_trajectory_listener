@@ -190,13 +190,13 @@ public class MainActivity extends RosActivity {
             return animationDrawableWithEndCallback;
         }
     });
-      /*displayManager.setClearScreenCallable(new MessageCallable<Integer, Integer>() {
+      displayManager.setClearScreenCallable(new MessageCallable<Integer, Integer>() {
           @Override
           public Integer call(Integer  message) {
               onClearScreen();
               return 1;
           }
-      });*/
+      });
 
       gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
           @Override
@@ -222,9 +222,9 @@ public class MainActivity extends RosActivity {
         userDrawnMessage.add(points);
     }
 
-   /* private void onClearScreen(){
-        userDrawingsView.clear(); //clear display of user-drawn shapes
-    }*/
+    private void onClearScreen(){
+        userDrawingsView.requestClear(); //clear display of user-drawn shapes
+    }
 
 private void onShapeDrawingFinish(){
     Log.e(TAG,"Animation finished!");
