@@ -74,7 +74,7 @@ public class MainActivity extends RosActivity {
     private GestureDetector gestureDetector;
     private boolean longClicked = true;
     private int timeBetweenWatchdogClears_ms = 100;
-
+    private boolean replayingUserShapes = false;
     public MainActivity() {
     // The RosActivity constructor configures the notification title and ticker
     // messages.
@@ -110,7 +110,11 @@ public class MainActivity extends RosActivity {
       });
 
       displayManager = (DisplayManager<nav_msgs.Path>) findViewById(R.id.image);
-      displayManager.setTopicName("write_traj");
+      if(replayingUserShapes){
+          displayManager.setTopicName("user_shapes");//
+      }else{
+          displayManager.setTopicName("write_traj");//"user_shapes");//
+      }
       displayManager.setMessageType(nav_msgs.Path._TYPE);
 
       displayManager.setMessageToDrawableCallable(new MessageCallable<Drawable, nav_msgs.Path>() {
@@ -260,7 +264,13 @@ private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.grap
     android.graphics.Path currPath = new android.graphics.Path(path);
 
     ShapeDrawable shapeDrawable = new ShapeDrawable();
-    shapeDrawable.getPaint().setColor(Color.BLUE);
+    if(replayingUserShapes){
+        shapeDrawable.getPaint().setColor(Color.argb(255,138,205,165));//Color.BLUE);
+    }
+    else
+    {
+        shapeDrawable.getPaint().setColor(Color.argb(255,124,163,182));//Color.argb(255,138,205,165));//Color.BLUE);
+    }
     shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
     shapeDrawable.getPaint().setStrokeWidth(10);
     shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);
@@ -288,7 +298,13 @@ private ShapeDrawable addPointToShapeDrawablePath_quad(float x, float y, float x
     android.graphics.Path currPath = new android.graphics.Path(path);
 
     ShapeDrawable shapeDrawable = new ShapeDrawable();
-    shapeDrawable.getPaint().setColor(Color.BLUE);
+    if(replayingUserShapes){
+    shapeDrawable.getPaint().setColor(Color.argb(255,138,205,165));//Color.BLUE);
+    }
+    else
+    {
+        shapeDrawable.getPaint().setColor(Color.argb(255,124,163,182));//Color.argb(255,138,205,165));//Color.BLUE);
+    }
     shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
     shapeDrawable.getPaint().setStrokeWidth(10);
     shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);
@@ -337,9 +353,15 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
         // The RosTextView is a NodeMain that must be executed in order to
     // start displaying incoming messages.
       Log.e(TAG, "Ready to execute");
+        if(replayingUserShapes){
+
+            nodeMainExecutor.execute(displayManager, nodeConfiguration.setNodeName("android_gingerbread2/display_manager"));
+            nodeMainExecutor.execute(interactionManager, nodeConfiguration.setNodeName("android_gingerbread2/interaction_manager"));
+        }
+        else{
     nodeMainExecutor.execute(displayManager, nodeConfiguration.setNodeName("android_gingerbread/display_manager"));
     nodeMainExecutor.execute(interactionManager, nodeConfiguration.setNodeName("android_gingerbread/interaction_manager"));
-
+        }
   }
 
     @Override

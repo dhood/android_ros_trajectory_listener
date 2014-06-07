@@ -117,6 +117,10 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
               }
             });
         } else if (drawableCallable != null) {
+
+            if(message instanceof nav_msgs.Path){ // this does not belong in this class
+                if(((Path) message).getPoses().size()!=0){//prevent drawing the stop bit
+
             post(new Runnable() {
                 @Override
                 public void run() {
@@ -167,6 +171,8 @@ public class DisplayManager<T> extends ImageView implements NodeMain {
                     drawable.start();
                 }
             });
+
+                }}
         }
         postInvalidate();
       }
