@@ -238,7 +238,8 @@ private ShapeDrawable addPointToShapeDrawablePath(float x, float y, android.grap
     android.graphics.Path currPath = new android.graphics.Path(path);
 
     ShapeDrawable shapeDrawable = new ShapeDrawable();
-    shapeDrawable.getPaint().setColor(Color.MAGENTA);
+    float[] color = {40,100,100};
+    shapeDrawable.getPaint().setColor(Color.HSVToColor(color));//Color.MAGENTA);
     shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
     shapeDrawable.getPaint().setStrokeWidth(10);
     shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);
@@ -262,7 +263,9 @@ private ShapeDrawable addPointToShapeDrawablePath_quad(float x, float y, float x
     android.graphics.Path currPath = new android.graphics.Path(path);
 
     ShapeDrawable shapeDrawable = new ShapeDrawable();
-    shapeDrawable.getPaint().setColor(Color.MAGENTA);
+    //shapeDrawable.getPaint().setColor(Color.MAGENTA);
+    float[] color = {40,100,100};
+    shapeDrawable.getPaint().setColor(Color.HSVToColor(color));
     shapeDrawable.getPaint().setStyle(Paint.Style.STROKE);
     shapeDrawable.getPaint().setStrokeWidth(10);
     shapeDrawable.getPaint().setStrokeJoin(Paint.Join.ROUND);
