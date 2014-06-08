@@ -1,11 +1,13 @@
 package org.ros.android.shape_learner;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,7 +23,10 @@ import java.util.ArrayList;
  */
 public class SignatureView extends View {
     private static final java.lang.String TAG = "SignatureView";
-    private MessageCallable<Integer, ArrayList<double[]> > strokeFinishedCallable;
+    private MessageCallable<Integer, ArrayList<double[]> > stylusStrokeFinishedCallable;
+    private MessageCallable<Integer, ArrayList<double[]> > fingerStrokeFinishedCallable;
+    private boolean respondToFinger = false;
+    private boolean respondToStylus = false;
     private static final float STROKE_WIDTH = 10f;
 
     /** Need to track this so the dirty region can accommodate the stroke. **/
@@ -51,17 +56,32 @@ public class SignatureView extends View {
     /**
      * Set which function will be called when a stroke is finished (pen-up detected).
      */
-    public void setStrokeFinishedCallable(MessageCallable<Integer, ArrayList<double[]> > callable) {
-        this.strokeFinishedCallable = callable;
+    public void setStylusStrokeFinishedCallable(MessageCallable<Integer, ArrayList<double[]> > callable) {
+        this.stylusStrokeFinishedCallable = callable;
+    }
+    /**
+     * Set which function will be called when a stroke is finished (pen-up detected).
+     */
+    public void setFingerStrokeFinishedCallable(MessageCallable<Integer, ArrayList<double[]> > callable) {
+        this.fingerStrokeFinishedCallable = callable;
     }
 
+    /**
+     * Set paint color of path
+     * @param color color to set to e.g. Color.GREEN
+     */
+    public void setColor(int color){
+        paint.setColor(color);
+    }
+
+    public void setRespondToFinger(boolean _respondToFinger){ respondToFinger = _respondToFinger;}
+    public void setRespondToStylus(boolean _respondToStylus){ respondToStylus = _respondToStylus;}
 
     /**
      * Erases the signature.
      */
     public void clear() {
         path.reset();
-
         // Repaints the entire view.
         invalidate();
     }
@@ -73,17 +93,13 @@ public class SignatureView extends View {
 
     }
 
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float eventX = event.getX();
         float eventY = event.getY();
-        Log.e(TAG, String.valueOf(event.getSource()));
         if(event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){ //allow another to process touch events from finger
-            Log.e(TAG,"Ignored finger touch event: " + event.toString());
-            return false;
-        }
-        else if(event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS){//only respond to inputs from the stylus
-
+            if(respondToFinger){
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     path.moveTo(eventX, eventY);
@@ -96,8 +112,11 @@ public class SignatureView extends View {
                     drawRecentPoints(event);
                     break;
                 case MotionEvent.ACTION_UP:
+
                     drawRecentPoints(event);
-                    strokeFinishedCallable.call(pointsOnPath);
+                    if(fingerStrokeFinishedCallable != null){
+                        fingerStrokeFinishedCallable.call(pointsOnPath);
+                    }
                     pointsOnPath = new ArrayList<double[]>();
                     break;
 
@@ -115,9 +134,54 @@ public class SignatureView extends View {
 
             lastTouchX = eventX;
             lastTouchY = eventY;
+            return true;
+            }
+            else{
+                return false;
+            }
         }
-        return true;
+        else if(event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS){//only respond to inputs from the stylus
+            if(respondToStylus){
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        path.moveTo(eventX, eventY);
+                        lastTouchX = eventX;
+                        lastTouchY = eventY;
+                        // There is no end point yet, so don't waste cycles invalidating.
+                        return true;
 
+                    case MotionEvent.ACTION_MOVE:
+                        drawRecentPoints(event);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        drawRecentPoints(event);
+                        if(stylusStrokeFinishedCallable != null){
+                            stylusStrokeFinishedCallable.call(pointsOnPath);
+                        }
+                        pointsOnPath = new ArrayList<double[]>();
+                        break;
+
+                    default:
+                        Log.e(TAG,"Ignored touch event: " + event.toString());
+                        return false;
+                }
+
+                // Include half the stroke width to avoid clipping.
+                invalidate(
+                        (int) (dirtyRect.left - HALF_STROKE_WIDTH),
+                        (int) (dirtyRect.top - HALF_STROKE_WIDTH),
+                        (int) (dirtyRect.right + HALF_STROKE_WIDTH),
+                        (int) (dirtyRect.bottom + HALF_STROKE_WIDTH));
+
+                lastTouchX = eventX;
+                lastTouchY = eventY;
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+        return false;
     }
 
     /**

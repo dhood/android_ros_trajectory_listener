@@ -68,6 +68,7 @@ public class MainActivity extends RosActivity {
     private double MM2INCH = 0.0393701; //number of millimetres in one inch (for conversions)
     private DisplayManager<nav_msgs.Path> displayManager;
     private SignatureView userDrawingsView;
+    private SignatureView userGestureView;
     private Button buttonClear;
     private ImageButton buttonSend;
     private ArrayList< ArrayList<double[]> > userDrawnMessage = new ArrayList<ArrayList<double[]>>();
@@ -100,11 +101,27 @@ public class MainActivity extends RosActivity {
       final double rate = 1.0;
       startWatchdogClearer();
 
+      //for collecting user demonstrations
       userDrawingsView = (SignatureView)findViewById(R.id.signature);
-      userDrawingsView.setStrokeFinishedCallable(new MessageCallable<Integer, ArrayList<double[]>>() {
+      userDrawingsView.setRespondToFinger(false);
+      userDrawingsView.setRespondToStylus(true);
+      userDrawingsView.setStylusStrokeFinishedCallable(new MessageCallable<Integer, ArrayList<double[]>>() {
           @Override
-          public Integer call(ArrayList<double[]>  message) {
-              onStrokeDrawingFinished(message);
+          public Integer call(ArrayList<double[]> message) {
+              onStylusStrokeDrawingFinished(message);
+              return 1;
+          }
+      });
+
+      //for collecting user gestures
+      userGestureView = (SignatureView)findViewById(R.id.gestureView);
+      userGestureView.setRespondToFinger(true);
+      userGestureView.setRespondToStylus(false);
+      userGestureView.setColor(Color.RED);
+      userGestureView.setFingerStrokeFinishedCallable(new MessageCallable<Integer, ArrayList<double[]>>() {
+          @Override
+          public Integer call(ArrayList<double[]> message) {
+              onFingerStrokeDrawingFinished(message);
               return 1;
           }
       });
@@ -211,7 +228,7 @@ public class MainActivity extends RosActivity {
       });
   }
 
-    private void onStrokeDrawingFinished(ArrayList<double[]> points){
+    private void onStylusStrokeDrawingFinished(ArrayList<double[]> points){
         //convert from pixels in 'tablet frame' to metres in 'robot frame'
         for(double[] point : points){
             point[0] = PX2M(point[0]);                        //x coordinate
@@ -220,6 +237,40 @@ public class MainActivity extends RosActivity {
         //interactionManager.publishUserDrawnShapeMessage(points);
         Log.e(TAG, "Adding stroke to message");
         userDrawnMessage.add(points);
+    }
+     //When a finger-drawn stoke is finished in the SignatureView, publish its centre to the gesture topic
+    private void onFingerStrokeDrawingFinished(ArrayList<double[]> points){
+        if(points.size()>15){
+            //convert from pixels in 'tablet frame' to metres in 'robot frame'
+            double xMax = Double.NEGATIVE_INFINITY;
+            double yMax = Double.NEGATIVE_INFINITY;
+            double xMin = Double.POSITIVE_INFINITY;
+            double yMin = Double.POSITIVE_INFINITY;
+            for(double[] point : points){
+                point[0] = PX2M(point[0]);                        //x coordinate
+                point[1] = PX2M(resolution_tablet[1] - point[1]); //y coordinate
+                //update the max and min values of the stroke
+                if(point[0]>xMax){
+                    xMax = point[0];
+                }
+                if(point[1]>yMax){
+                    yMax = point[1];
+                }
+                if(point[0]<xMin){
+                    xMin = point[0];
+                }
+                if(point[1]<yMin){
+                    yMin = point[1];
+                }
+            }
+            double xRange = xMax - xMin;
+            double yRange = yMax - yMin;
+            double xCentre = xMax - xRange/2.0;
+            double yCentre = yMax - yRange/2.0;
+            Log.e(TAG, "Publishing finger stroke");
+            interactionManager.publishGestureInfoMessage(xCentre, yCentre);
+        }
+        userGestureView.requestClear();
     }
 
     private void onClearScreen(){
@@ -333,7 +384,7 @@ private double PX2M(double x){return PX2MM(x)/1000.0;}
   protected void init(NodeMainExecutor nodeMainExecutor) {
         interactionManager = new InteractionManager();
         interactionManager.setTouchInfoTopicName("touch_info");
-        interactionManager.setGestureInfoTopicName("long_touch_info");
+        interactionManager.setGestureInfoTopicName("gesture_info");
         interactionManager.setClearScreenTopicName("clear_screen");
         displayManager.setClearScreenTopicName("clear_screen");
         displayManager.setClearWatchdogTopicName("watchdog_clear/tablet");
