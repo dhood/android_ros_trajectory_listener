@@ -19,7 +19,7 @@ task wrapper(type: Wrapper) {
 }
 
 buildscript {
-    apply from: "https://github.com/rosjava/rosjava_bootstrap/raw/indigo/buildscript.gradle"
+    apply from: "https://github.com/talregev/rosjava_mvn_repo/raw/master/buildscript.gradle"
     //noinspection GroovyAssignabilityCheck
     dependencies {
         classpath "com.android.tools.build:gradle:1.0.1"
@@ -28,8 +28,13 @@ buildscript {
 
 apply plugin: 'catkin'
 
-
 allprojects {
+
+    repositories {
+        maven {
+            url "http://www.github.com/talregev/rosjava_mvn_repo/raw/master"
+        }
+    }
     /*
       A github url provides a good standard unique name for your project
       Example below, but you may wish to switch to your own unique url.
