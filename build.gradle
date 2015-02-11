@@ -29,12 +29,7 @@ buildscript {
 apply plugin: 'catkin'
 
 allprojects {
-
-    repositories {
-        maven {
-            url "http://www.github.com/talregev/rosjava_mvn_repo/raw/master"
-        }
-    }
+    apply from: "https://github.com/talregev/rosjava_mvn_repo/raw/master/maven.gradle"
     /*
       A github url provides a good standard unique name for your project
       Example below, but you may wish to switch to your own unique url.
@@ -71,4 +66,4 @@ subprojects {
   If you're using catkin_make, this is not important, since it will use the task list specified
   in CMakeLists.txt
 */
-defaultTasks 'tasks'
+defaultTasks 'assembleRelease', 'uploadArchives'
