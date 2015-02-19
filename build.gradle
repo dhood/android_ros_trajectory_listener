@@ -15,35 +15,21 @@
  */
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.9'
+    gradleVersion = "2.2.1"
 }
 
 buildscript {
-    def rosMavenPath = "$System.env.ROS_MAVEN_PATH".split(':').collect { 'file://' + it }
-    def rosMavenRepository = "$System.env.ROS_MAVEN_REPOSITORY"
-    repositories {
-        rosMavenPath.each { p ->
-            maven {
-                url p
-            }
-        }
-        mavenLocal()
-        maven {
-            url rosMavenRepository
-        }
-        mavenCentral()
-    }
+    apply from: "https://github.com/talregev/rosjava_mvn_repo/raw/master/buildscript.gradle"
+    //noinspection GroovyAssignabilityCheck
     dependencies {
-        classpath group: 'org.ros.rosjava_bootstrap', name: 'gradle_plugins', version: '[0.1,0.2)'
-        classpath group: 'org.ros.rosjava_messages', name: 'trajectory_msgs', version: '[1.10,1.11)'
-        classpath 'com.android.tools.build:gradle:0.7.+'
+        classpath "com.android.tools.build:gradle:1.0.1"
     }
 }
 
 apply plugin: 'catkin'
 
-
 allprojects {
+    apply from: "https://github.com/talregev/rosjava_mvn_repo/raw/master/maven.gradle"
     /*
       A github url provides a good standard unique name for your project
       Example below, but you may wish to switch to your own unique url.
@@ -57,8 +43,19 @@ subprojects {
       See https://github.com/rosjava/rosjava_bootstrap (look for gradle_plugins)
       to see what is going on under the hood.
     */
-    //apply plugin: 'ros-java'
     apply plugin: 'ros-android'
+    afterEvaluate { project ->
+        android {
+            packagingOptions {
+                exclude "META-INF/LICENSE.txt"
+                exclude "META-INF/NOTICE.txt"
+                exclude 'META-INF/gradle-plugins/catkin.properties'
+                exclude 'META-INF/gradle-plugins/ros.properties'
+                exclude 'META-INF/gradle-plugins/ros-android.properties'
+                exclude 'META-INF/gradle-plugins/ros-java.properties'
+            }
+        }
+    }
 }
 
 /*
@@ -73,4 +70,4 @@ subprojects {
   If you're using catkin_make, this is not important, since it will use the task list specified
   in CMakeLists.txt
 */
-defaultTasks 'tasks'
+defaultTasks 'assembleRelease', 'uploadArchives'
